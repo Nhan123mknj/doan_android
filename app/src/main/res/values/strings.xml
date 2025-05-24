@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">NewsApp</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="detail_demo">
+    Ukrainian President Volodymyr Zelensky has accused European countries
+    that continue to buy Russian oil of "earning their money in other people's blood".
+</string>
+</resources>

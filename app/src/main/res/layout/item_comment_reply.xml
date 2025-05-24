@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingHorizontal="8dp"
+    android:paddingVertical="6dp">
+
+    <!-- Profile picture of the replier -->
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/ivReplyProfilePic"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/avatar"
+        android:contentDescription="Reply profile picture"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Username of the replier -->
+    <TextView
+        android:id="@+id/tvReplyUsername"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:textColor="@android:color/black"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/ivReplyProfilePic"
+        app:layout_constraintTop_toTopOf="@+id/ivReplyProfilePic"
+        tools:text="Jane Doe" />
+
+    <!-- Reply content -->
+    <TextView
+        android:id="@+id/content"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="@android:color/black"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/tvReplyUsername"
+        app:layout_constraintTop_toBottomOf="@+id/tvReplyUsername"
+        tools:text="Thanks for the comment!" />
+
+    <!-- Timestamp of the reply -->
+    <TextView
+        android:id="@+id/tvReplyTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="@android:color/darker_gray"
+        android:textSize="10sp"
+        app:layout_constraintStart_toStartOf="@+id/content"
+        app:layout_constraintTop_toBottomOf="@+id/content"
+        tools:text="2h" />
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Khi bấm vào thì icon hồng -->
+    <item android:drawable="@drawable/ic_heart_filled" android:state_checked="true"/>
+    <!-- Bình thường là viền đen -->
+    <item android:drawable="@drawable/ic_heart_outline"/>
+</selector>
