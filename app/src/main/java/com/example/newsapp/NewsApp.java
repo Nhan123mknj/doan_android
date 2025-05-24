@@ -19,5 +19,6 @@ public class NewsApp extends Application {
         config.put("api_key", "976173493414541");
         config.put("api_secret", "EsJ_MekMzCxJjF9A6b9ntsGB5kw");
         MediaManager.init(this, config);
+        //toi ne tess
     }
 }
