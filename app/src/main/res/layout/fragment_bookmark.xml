@@ -3,12 +3,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="16dp"
     tools:context=".Activity.BookmarkFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <!-- RecyclerView để hiển thị danh sách bài viết đã bookmark -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewBookmarkedNews"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:visibility="visible"
+        tools:listitem="@layout/list_item_lastest" />
+
+    <!-- TextView hiển thị khi không có bài viết đã bookmark -->
+    <TextView
+        android:id="@+id/emptyTextView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="Chưa có bài viết đã lưu"
+        android:textSize="16sp"
+        android:textStyle="italic"
+        android:textColor="@android:color/darker_gray"
+        android:visibility="gone" />
 
 </FrameLayout>

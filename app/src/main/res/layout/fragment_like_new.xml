@@ -3,12 +3,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="16dp"
     tools:context=".Activity.LikeNewFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <!-- RecyclerView để hiển thị danh sách tin đã lưu -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewLikedNews"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:visibility="visible"
+        tools:listitem="@layout/list_item_lastest" />
+
+    <!-- TextView hiển thị khi không có tin đã lưu -->
+    <TextView
+        android:id="@+id/emptyTextView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="Chưa có tin tức đã lưu"
+        android:textSize="16sp"
+        android:textStyle="italic"
+        android:textColor="@android:color/darker_gray"
+        android:visibility="gone" />
 
 </FrameLayout>
