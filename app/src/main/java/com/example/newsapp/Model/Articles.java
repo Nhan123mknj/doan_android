@@ -49,6 +49,8 @@ public class Articles  implements Serializable {
     private int likesCount;
     @PropertyName("liked_by")
     private List<String> likedBy;
+    @PropertyName("saved_by")
+    private List<String> savedBy;
     @PropertyName("is_featured")
     private boolean isFeatured;
     @PropertyName("status")
@@ -194,6 +196,14 @@ public class Articles  implements Serializable {
 
     public void setLikedBy(List<String> likedBy) {
         this.likedBy = likedBy;
+    }
+
+    public List<String> getSavedBy() {
+        return savedBy;
+    }
+
+    public void setSavedBy(List<String> savedBy) {
+        this.savedBy = savedBy;
     }
 
     public boolean isFeatured() {

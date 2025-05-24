@@ -23,6 +23,9 @@
         <activity
             android:name=".Activity.SearchActivity"
             android:exported="false" />
+        <activity
+            android:name=".Activity.SearchResultActivity"
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
