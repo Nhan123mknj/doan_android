@@ -1,4 +1,4 @@
-package com.example.newsapp.Activity;
+package com.example.newsapp.Fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.example.newsapp.Activity.DetailActivity;
 import com.example.newsapp.Adapter.ArticlesAdapter;
 import com.example.newsapp.Interface.IClickItemArticlesListener;
 import com.example.newsapp.Model.Articles;
@@ -85,6 +86,11 @@ public class LikeNewFragment extends Fragment {
             @Override
             public void onItemClickedDelete(Articles articles) {
                 // Not used in this context - users shouldn't delete liked articles
+            }
+
+            @Override
+            public void onItemClickedUpdate(Articles articles) {
+
             }
         }, ArticlesAdapter.TYPE_LASTEST);
         recyclerView.setAdapter(adapter);

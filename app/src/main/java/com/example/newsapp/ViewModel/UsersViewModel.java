@@ -32,4 +32,7 @@ public class UsersViewModel extends ViewModel {
     public MutableLiveData<List<Users>> getUsersLiveData() {
         return usersLiveData;
     }
+    public void changePass(String oldPassword, String newPassword) {
+        userRespository.changePass(oldPassword, newPassword);
+    }
 }

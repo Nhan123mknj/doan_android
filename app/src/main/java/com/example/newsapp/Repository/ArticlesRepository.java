@@ -3,18 +3,24 @@ package com.example.newsapp.Repository;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.Gravity;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.cloudinary.android.MediaManager;
+import com.cloudinary.utils.ObjectUtils;
 import com.example.newsapp.Activity.LoginActivity;
 import com.example.newsapp.Helper.DialogLogin;
 import com.example.newsapp.Model.Articles;
 import com.example.newsapp.Model.Report;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -22,6 +28,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -29,7 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Repository for managing articles data, handling Firestore queries and
@@ -315,7 +321,10 @@ public class ArticlesRepository {
 
         void onError(String errorMessage);
     }
-
+    public interface OnImageUploadCallback {
+        void onSuccess(String imageUrl, String publicId);
+        void onError(String errorMessage);
+    }
     private void loadCategories() {
         db.collection("categories").addSnapshotListener((value, error) -> {
             if (error != null) {
@@ -360,12 +369,70 @@ public class ArticlesRepository {
                 });
     }
 
-    /**
-     * Retrieves articles liked by a specific user.
-     * 
-     * @param userId The ID of the user.
-     * @return LiveData containing the list of liked articles.
-     */
+    public void updateArticle(Articles article) {
+        db.collection("articles")
+                .document(article.getArticleId())
+                .set(article)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        article.setStatus("pending");
+                        Log.d("ArticlesRepository", "Article updated successfully");
+                    }
+                });
+    }
+    public void uploadImage(Uri imageUri, OnImageUploadCallback callback) {
+        MediaManager.get().upload(imageUri)
+                .option("folder", "articles_thumb")
+                .callback(new com.cloudinary.android.callback.UploadCallback() {
+                    @Override
+                    public void onStart(String requestId) {
+
+                    }
+
+                    @Override
+                    public void onProgress(String requestId, long bytes, long totalBytes) {
+                        // Có thể thêm logic nếu cần
+                    }
+
+                    @Override
+                    public void onSuccess(String requestId, Map resultData) {
+                        String imageUrl = (String) resultData.get("secure_url");
+                        String publicId = (String) resultData.get("public_id");
+                        callback.onSuccess(imageUrl, publicId);
+                    }
+
+                    @Override
+                    public void onError(String requestId, com.cloudinary.android.callback.ErrorInfo error) {
+                        callback.onError(error.getDescription());
+                    }
+
+                    @Override
+                    public void onReschedule(String requestId, com.cloudinary.android.callback.ErrorInfo error) {
+                        // Có thể thêm logic nếu cần
+                    }
+                }).dispatch();
+    }
+    public LiveData<Boolean> deleteImage(String publicId) {
+        MutableLiveData<Boolean> resultLiveData = new MutableLiveData<>();
+
+        new Thread(() -> {
+            try {
+                Map result = MediaManager.get().getCloudinary().uploader().destroy(publicId, ObjectUtils.emptyMap());
+                if ("ok".equals(result.get("result"))) {
+                    resultLiveData.postValue(true); // Xóa thành công
+                } else {
+                    resultLiveData.postValue(false); // Xóa thất bại
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                resultLiveData.postValue(false); // Lỗi khi xóa ảnh
+            }
+        }).start();
+
+        return resultLiveData;
+    }
+
     public LiveData<List<Articles>> getArticlesLikedByUser(String userId) {
         MutableLiveData<List<Articles>> likedArticlesLiveData = new MutableLiveData<>();
         if (userId == null || userId.isEmpty()) {
@@ -380,8 +447,7 @@ public class ArticlesRepository {
         db.collection("articles")
                 .whereArrayContains("liked_by", userId)
                 .whereEqualTo("status", "published")
-                // Temporarily remove orderBy due to Firestore composite index requirement
-                // .orderBy("publishedAt")
+
                 .addSnapshotListener((value, error) -> {
                     if (error != null) {
                         Log.e("ArticlesRepository", "Error fetching liked articles: " + error.getMessage());

@@ -79,7 +79,7 @@ public class ArticlesAdapter extends RecyclerView.Adapter<ArticlesAdapter.ViewHo
                 popupMenu.setOnMenuItemClickListener(item -> {
                     switch (item.getItemId()){
                         case R.id.update:
-                            Log.d("TAG", "onBindViewHolder: update");
+                            listener.onItemClickedUpdate(articles);
                             return true;
                         case R.id.delete:
                             listener.onItemClickedDelete(articles);
@@ -117,6 +117,7 @@ public class ArticlesAdapter extends RecyclerView.Adapter<ArticlesAdapter.ViewHo
                 publishedAt = itemView.findViewById(R.id.pubDate);
                 thumbnail = itemView.findViewById(R.id.news_trending_img);
                 categoryTextView = itemView.findViewById(R.id.categoryTextView);
+                authorTextView = itemView.findViewById(R.id.authorTextView);
             }
         }
     }

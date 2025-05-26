@@ -113,4 +113,9 @@ public class SearchResultActivity extends AppCompatActivity implements IClickIte
     public void onItemClickedDelete(Articles articles) {
         // Not used here
     }
+
+    @Override
+    public void onItemClickedUpdate(Articles articles) {
+
+    }
 } 

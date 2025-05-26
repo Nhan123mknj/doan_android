@@ -1,4 +1,4 @@
-package com.example.newsapp.Activity;
+package com.example.newsapp.Fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -16,6 +16,9 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.newsapp.Activity.ArticlesByCategoriesActivity;
+import com.example.newsapp.Activity.DetailActivity;
+import com.example.newsapp.Activity.SearchResultActivity;
 import com.example.newsapp.Adapter.ArticlesAdapter;
 import com.example.newsapp.Adapter.CategoriesAdapter;
 import com.example.newsapp.Adapter.TrendingAdapter;
@@ -63,8 +66,6 @@ public class ExploreFragment extends Fragment implements IClickItemArticlesListe
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
      * @return A new instance of fragment ExploreFragment.
      */
     // TODO: Rename and change types and number of parameters
@@ -237,5 +238,10 @@ public class ExploreFragment extends Fragment implements IClickItemArticlesListe
     @Override
     public void onItemClickedDelete(Articles articles) {
         // Not used in explore fragment
+    }
+
+    @Override
+    public void onItemClickedUpdate(Articles articles) {
+
     }
 }

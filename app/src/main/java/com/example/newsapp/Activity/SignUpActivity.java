@@ -20,6 +20,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.newsapp.Helper.ValidationUltils;
 import com.example.newsapp.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -66,19 +67,7 @@ public class SignUpActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         firestore  = FirebaseFirestore.getInstance();
 
-        fullnameEditText = findViewById(R.id.fullname);
-        emailEditText = findViewById(R.id.email);
-        passwordEditText = findViewById(R.id.password);
-        phonenumberEditText = findViewById(R.id.phone_number);
-        signUpButton = findViewById(R.id.btn_sign_up);
-        passwordRepeatEditText = findViewById(R.id.password_repeat);
-        loginTextView = findViewById(R.id.login);
-        messageError = findViewById(R.id.messageError);
-        fullnameError = findViewById(R.id.fullnameError);
-        emailError = findViewById(R.id.emailError);
-        passwordError = findViewById(R.id.passwordError);
-        passwordRepeatError = findViewById(R.id.passwordRepeatError);
-        btnVisible = findViewById(R.id.btn_visible);
+        initView();
 
         btnVisible.setOnClickListener(v -> {
             if (passwordEditText.getInputType() == (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD)) {
@@ -100,6 +89,22 @@ public class SignUpActivity extends AppCompatActivity {
             login();
     });
 }
+
+    private void initView() {
+        fullnameEditText = findViewById(R.id.fullname);
+        emailEditText = findViewById(R.id.email);
+        passwordEditText = findViewById(R.id.password);
+        phonenumberEditText = findViewById(R.id.phone_number);
+        signUpButton = findViewById(R.id.btn_sign_up);
+        passwordRepeatEditText = findViewById(R.id.password_repeat);
+        loginTextView = findViewById(R.id.login);
+        messageError = findViewById(R.id.messageError);
+        fullnameError = findViewById(R.id.fullnameError);
+        emailError = findViewById(R.id.emailError);
+        passwordError = findViewById(R.id.passwordError);
+        passwordRepeatError = findViewById(R.id.passwordRepeatError);
+        btnVisible = findViewById(R.id.btn_visible);
+    }
 
     private void login() {
         Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
@@ -123,55 +128,39 @@ public class SignUpActivity extends AppCompatActivity {
         passwordError.setVisibility(View.GONE);
         passwordError.setText("");
         passwordRepeatError.setVisibility(View.GONE);
-        
-        // Kiểm tra tên đầy đủ
-        if (TextUtils.isEmpty(fullname)) {
+
+
+        String fullNameError = ValidationUltils.validateFullName(fullname);
+        if (fullNameError != null) {
             fullnameError.setVisibility(View.VISIBLE);
-            fullnameError.setText("Vui lòng nhập họ tên");
+            fullnameError.setText(fullNameError);
             return;
         }
 
-        // Kiểm tra email
-        if (TextUtils.isEmpty(email)) {
+
+        String emailValidationError = ValidationUltils.validateEmail(email);
+        if (emailValidationError != null) {
             emailError.setVisibility(View.VISIBLE);
-            emailError.setText("Vui lòng nhập email");
+            emailError.setText(emailValidationError);
             return;
         }
 
-        // Kiểm tra định dạng email
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            emailError.setVisibility(View.VISIBLE);
-            emailError.setText("Email không hợp lệ");
-            return;
-        }
 
-        // Kiểm tra mật khẩu
-        if (TextUtils.isEmpty(password)) {
+        String passwordValidationError = ValidationUltils.validatePassword(password);
+        if (passwordValidationError != null) {
             passwordError.setVisibility(View.VISIBLE);
-            passwordError.setText("Vui lòng nhập mật khẩu");
-            return;
-        }
-
-        // Kiểm tra mật khẩu có ít nhất 6 ký tự
-        if (password.length() < 6) {
-            passwordError.setVisibility(View.VISIBLE);
-            passwordError.setText("Mật khẩu phải có ít nhất 6 ký tự");
+            passwordError.setText(passwordValidationError);
             return;
         }
 
         // Kiểm tra mật khẩu xác nhận
-        if (TextUtils.isEmpty(repeatPassword)) {
+        String repeatPasswordError = ValidationUltils.validateRepeatPassword(password, repeatPassword);
+        if (repeatPasswordError != null) {
             passwordRepeatError.setVisibility(View.VISIBLE);
-            passwordRepeatError.setText("Vui lòng nhập lại mật khẩu");
+            passwordRepeatError.setText(repeatPasswordError);
             return;
         }
 
-        // Kiểm tra mật khẩu xác nhận có khớp không
-        if (!password.equals(repeatPassword)) {
-            passwordRepeatError.setVisibility(View.VISIBLE);
-            passwordRepeatError.setText("Mật khẩu không khớp");
-            return;
-        }
         View view = getCurrentFocus();
         if (view != null) {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);

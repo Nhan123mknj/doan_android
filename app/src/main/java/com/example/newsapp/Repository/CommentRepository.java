@@ -18,7 +18,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Repository for managing comments and replies, handling Firestore queries and updates.
@@ -30,14 +32,20 @@ public class CommentRepository {
     private final MutableLiveData<String> errorLiveData = new MutableLiveData<>();
     private static final String COMMENTS_COLLECTION = "comments";
     private static final String COMMENT_LIST_SUBCOLLECTION = "commentList";
-
+    private final Map<String, String> userNameMap = new HashMap<>();
     private FirebaseAuth auth;
+
+    public CommentRepository() {
+        loadUsers();
+    }
+
     /**
      * Retrieves comments for an article, optionally filtered by categoryId.
      * @param articleId The ID of the article.
 
      * @return LiveData containing the list of comments.
      */
+
     public LiveData<List<Comments>> getCommentsByArticleId(String articleId) {
         if (articleId == null || articleId.isEmpty()) {
             Log.e("CommentRepository", "Invalid articleId");
@@ -64,6 +72,7 @@ public class CommentRepository {
                     Comments comment = doc.toObject(Comments.class);
                     if (comment != null) {
                         comment.setCommentId(doc.getId());
+                        comment.setUsername(userNameMap.get(comment.getUserId()));
                         comments.add(comment);
                     }
                 }
@@ -146,5 +155,20 @@ public class CommentRepository {
 
     public MutableLiveData<List<Comments>> getCommentsLiveData() {
         return commentsLiveData;
+    }
+    private void loadUsers() {
+        db.collection("users").addSnapshotListener((value, error) -> {
+            if (error != null) {
+                Log.e("ArticlesRepository", "Error loading users: " + error.getMessage());
+                return;
+            }
+            if (value != null) {
+                for (DocumentSnapshot doc : value.getDocuments()) {
+                    String userId = doc.getId();
+                    String username = doc.getString("name");
+                    userNameMap.put(userId, username);
+                }
+            }
+        });
     }
 }

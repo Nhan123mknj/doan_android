@@ -1,6 +1,5 @@
-package com.example.newsapp.Activity;
+package com.example.newsapp.Fragment;
 
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -23,11 +22,10 @@ import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.newsapp.Activity.DetailActivity;
 import com.example.newsapp.Adapter.ArticlesAdapter;
 import com.example.newsapp.Adapter.ViewPagerAdapter;
-import com.example.newsapp.Fragment.AuthorSearchFragment;
-import com.example.newsapp.Fragment.CategoriesSearchFragment;
-import com.example.newsapp.Fragment.NewsSearchFragment;
+import com.example.newsapp.Helper.RSSUtils;
 import com.example.newsapp.Interface.IClickItemArticlesListener;
 import com.example.newsapp.Model.Articles;
 import com.example.newsapp.Model.Categories;
@@ -35,8 +33,6 @@ import com.example.newsapp.R;
 import com.example.newsapp.ViewModel.ArticlesViewModel;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 
 import java.util.ArrayList;
@@ -111,7 +107,7 @@ public class HomeFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
-        // Ánh xạ các View
+
         initView(view);
 
         list_lastest.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false));
@@ -121,7 +117,7 @@ public class HomeFragment extends Fragment {
                 new ViewModelProvider.AndroidViewModelFactory(getActivity().getApplication()))
                 .get(ArticlesViewModel.class);
 
-        // Adapter cho danh sách trending
+
         trendingArticlesAdapter = new ArticlesAdapter(trendingArticlesList,new IClickItemArticlesListener(){
 
             @Override
@@ -142,10 +138,15 @@ public class HomeFragment extends Fragment {
             public void onItemClickedDelete(Articles articles) {
 
             }
+
+            @Override
+            public void onItemClickedUpdate(Articles articles) {
+
+            }
         }, ArticlesAdapter.TYPE_TRENDING);
         list_trending.setAdapter(trendingArticlesAdapter);
 
-        // Quan sát danh sách bài viết trending
+
         articlesViewModel.getArticlesFeatured().observe(getViewLifecycleOwner(), articles -> {
             if (articles != null) {
                 trendingArticlesAdapter.setArticlesList(articles);
@@ -180,10 +181,15 @@ public class HomeFragment extends Fragment {
             public void onItemClickedDelete(Articles articles) {
 
             }
+
+            @Override
+            public void onItemClickedUpdate(Articles articles) {
+
+            }
         }, ArticlesAdapter.TYPE_LASTEST);
         list_lastest.setAdapter(lastestArticlesAdapter);
 
-        // Quan sát danh sách bài viết mới nhất
+
         articlesViewModel.getAllArticles().observe(getViewLifecycleOwner(), articles -> {
             if (articles != null) {
                 lastestArticlesAdapter.setArticlesList(articles);

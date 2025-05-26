@@ -92,10 +92,8 @@ public class CommentActivity extends AppCompatActivity {
             }
             Comments comment = new Comments();
             comment.setArticles_id(articleId);
-            String username = user.getDisplayName();
             try {
-                comment.setUserId(user.getUid() != null ? user.getUid() : "anonymous");
-                comment.setUsername(username);
+                comment.setUserId(user.getUid());
                 comment.setProfilePicUrl(user.getPhotoUrl() != null ? user.getPhotoUrl().toString() : "");
             } catch (Exception e) {
                 Log.e("CommentActivity", "Lỗi khi lấy thông tin người dùng: " + e.getMessage(), e);

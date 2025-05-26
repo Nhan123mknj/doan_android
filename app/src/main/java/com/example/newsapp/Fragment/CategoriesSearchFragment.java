@@ -107,6 +107,11 @@ public class CategoriesSearchFragment extends Fragment  {
             public void onItemClickedDelete(Articles articles) {
 
             }
+
+            @Override
+            public void onItemClickedUpdate(Articles articles) {
+
+            }
         });
         recyclerView.setAdapter(categoriesAdapter);
         categoriesViewModel.getAllCategories().observe(getViewLifecycleOwner(), categories -> {
