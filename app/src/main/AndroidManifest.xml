@@ -18,6 +18,12 @@
         android:theme="@style/Theme.NewsApp"
         tools:targetApi="31">
         <activity
+            android:name=".Activity.UpdateArticlesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.ChangePassActivity"
+            android:exported="false" />
+        <activity
             android:name=".Activity.ArticlesByCategoriesActivity"
             android:exported="false" />
         <activity

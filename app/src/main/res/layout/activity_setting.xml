@@ -41,9 +41,32 @@
                 />
         </LinearLayout>
         <LinearLayout
-            android:id="@+id/logout"
+            android:id="@+id/changePass"
             android:padding="16dp"
             android:layout_marginTop="30dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:clickable="true">
+            <ImageButton
+                android:id="@+id/icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:background="@drawable/change_pass_icon"/>
+            <TextView
+                android:id="@+id/tvSetting"
+                android:layout_marginStart="16dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Đổi mật khẩu"/>
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/logout"
+            android:padding="16dp"
+
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -53,12 +76,11 @@
             android:clickable="true"
             >
             <ImageButton
-                android:id="@+id/icon"
+                android:id="@+id/logout_icon"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:background="@drawable/icon_setting"/>
+                android:background="@drawable/logout_ic"/>
             <TextView
-                android:id="@+id/tvSetting"
                 android:layout_marginStart="16dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

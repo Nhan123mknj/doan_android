@@ -11,6 +11,10 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.example.newsapp.Fragment.ExploreFragment;
+import com.example.newsapp.Fragment.HomeFragment;
+import com.example.newsapp.Fragment.LikeNewFragment;
+import com.example.newsapp.Fragment.ProfileFragment;
 import com.example.newsapp.R;
 import com.example.newsapp.databinding.ActivityHomeBinding;
 

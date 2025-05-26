@@ -1,4 +1,4 @@
-package com.example.newsapp.Activity;
+package com.example.newsapp.Fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -13,13 +13,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 
+import com.example.newsapp.Activity.DetailActivity;
 import com.example.newsapp.Adapter.ArticlesAdapter;
 import com.example.newsapp.Interface.IClickItemArticlesListener;
 import com.example.newsapp.Model.Articles;
 import com.example.newsapp.Model.Categories;
 import com.example.newsapp.R;
 import com.example.newsapp.ViewModel.ArticlesViewModel;
-import com.example.newsapp.databinding.FragmentTrendingBinding;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -107,6 +107,11 @@ public class TrendingFragment extends Fragment {
 
             @Override
             public void onItemClickedDelete(Articles articles) {
+
+            }
+
+            @Override
+            public void onItemClickedUpdate(Articles articles) {
 
             }
         }, ArticlesAdapter.TYPE_TRENDING);

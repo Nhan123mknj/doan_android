@@ -1,16 +1,16 @@
 package com.example.newsapp.ViewModel;
 
 import android.content.Context;
+import android.net.Uri;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.newsapp.Model.Articles;
-import com.example.newsapp.Repository.ArticlesRepository;
 import com.example.newsapp.Model.Report;
+import com.example.newsapp.Repository.ArticlesRepository;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * ViewModel for managing articles data in the UI layer.
@@ -184,5 +184,15 @@ public class ArticlesViewModel extends ViewModel {
      */
     public LiveData<List<Articles>> getTrendingArticles(int limit) {
         return articlesRepository.getTrendingArticles(limit);
+    }
+    public void updateArticle(Articles article) {
+        articlesRepository.updateArticle(article);
+
+    }
+    public LiveData<Boolean> deleteImage(String publicId) {
+        return articlesRepository.deleteImage(publicId);
+    }
+    public void uploadImage(Uri publicId, ArticlesRepository.OnImageUploadCallback callback) {
+        articlesRepository.uploadImage(publicId, callback);
     }
 }

@@ -86,6 +86,11 @@ public class BookmarkFragment extends Fragment {
             public void onItemClickedDelete(Articles articles) {
                 // Not used in this context - users shouldn't delete bookmarked articles
             }
+
+            @Override
+            public void onItemClickedUpdate(Articles articles) {
+
+            }
         }, ArticlesAdapter.TYPE_LASTEST);
         recyclerView.setAdapter(adapter);
     }

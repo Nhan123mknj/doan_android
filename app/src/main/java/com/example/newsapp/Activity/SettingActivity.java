@@ -15,8 +15,9 @@ import com.example.newsapp.R;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class SettingActivity extends AppCompatActivity {
-    LinearLayout logout;
+    LinearLayout logout, changePass;
     ImageButton btnBack;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,8 +32,13 @@ public class SettingActivity extends AppCompatActivity {
 
         logout = findViewById(R.id.logout);
         btnBack = findViewById(R.id.btnBack);
+        changePass = findViewById(R.id.changePass);
         btnBack.setOnClickListener(v -> finish());
 
+        changePass.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ChangePassActivity.class);
+            startActivity(intent);
+        });
         logout.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
             Intent intent = new Intent(this, LoginActivity.class);

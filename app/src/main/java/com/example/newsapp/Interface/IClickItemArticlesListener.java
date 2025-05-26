@@ -8,5 +8,6 @@ public interface IClickItemArticlesListener {
     void onItemClickedCategories(Categories categories);
 
     void onItemClickedDelete(Articles articles);
+    void onItemClickedUpdate(Articles articles);
 
 }

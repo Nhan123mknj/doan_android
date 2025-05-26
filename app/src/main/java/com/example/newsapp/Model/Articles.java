@@ -55,7 +55,7 @@ public class Articles  implements Serializable {
     private boolean isFeatured;
     @PropertyName("status")
     private String status;
-
+    private String imagePublicId;
 
     public Articles() {
 
@@ -76,6 +76,14 @@ public class Articles  implements Serializable {
         this.likedBy = likedBy;
         this.isFeatured = isFeatured;
         this.status = status;
+    }
+
+    public String getImagePublicId() {
+        return imagePublicId;
+    }
+
+    public void setImagePublicId(String imagePublicId) {
+        this.imagePublicId = imagePublicId;
     }
 
     public String getUsername() {

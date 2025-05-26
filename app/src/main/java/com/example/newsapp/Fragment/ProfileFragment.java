@@ -1,12 +1,9 @@
-package com.example.newsapp.Activity;
+package com.example.newsapp.Fragment;
 
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -20,6 +17,11 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.newsapp.Activity.AddArticlesActivity;
+import com.example.newsapp.Activity.DetailActivity;
+import com.example.newsapp.Activity.EditProfileActivity;
+import com.example.newsapp.Activity.SettingActivity;
+import com.example.newsapp.Activity.UpdateArticlesActivity;
 import com.example.newsapp.Adapter.ArticlesAdapter;
 import com.example.newsapp.Interface.IClickItemArticlesListener;
 import com.example.newsapp.Model.Articles;
@@ -30,11 +32,6 @@ import com.example.newsapp.ViewModel.UsersViewModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -133,6 +130,15 @@ public class ProfileFragment extends Fragment {
                         .setNegativeButton("Không", null)
                         .show();
             }
+
+            @Override
+            public void onItemClickedUpdate(Articles articles) {
+                Intent intent = new Intent(getContext(), UpdateArticlesActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putString("articlesId",articles.getArticleId());
+                intent.putExtras(bundle);
+                startActivity(intent);
+            }
         },ArticlesAdapter.TYPE_LASTEST);
         recyclerView.setAdapter(adapter);
 
@@ -169,7 +175,7 @@ public class ProfileFragment extends Fragment {
         articlesViewModel.getArticlesByAuthor(uid).observe(getViewLifecycleOwner(), articles -> {
             if (articles != null && !articles.isEmpty()) {
                 Log.d("ProfileFragment", "Articles fetched: " + articles.size());
-                adapter.setArticlesList(articles); // Cập nhật danh sách trong adapter
+                adapter.setArticlesList(articles);
             } else {
                 Log.d("ProfileFragment", "No articles found for user: " + uid);
             }

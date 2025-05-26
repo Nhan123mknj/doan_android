@@ -109,6 +109,11 @@ public class NewsSearchFragment extends Fragment {
             public void onItemClickedDelete(Articles articles) {
 
             }
+
+            @Override
+            public void onItemClickedUpdate(Articles articles) {
+
+            }
         }, ArticlesAdapter.TYPE_LASTEST);
         recyclerView.setAdapter(adapter);
         articlesViewModel.getAllArticles().observe(getViewLifecycleOwner(), articles -> {
