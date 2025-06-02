@@ -3,10 +3,13 @@ package com.example.newsapp.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,14 +27,23 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.squareup.picasso.Picasso;
 
+import java.util.Locale;
+
 public class DetailActivity extends AppCompatActivity {
     private Articles article;
     private ArticlesViewModel viewModel;
 
     TextView contentTextView, title, date, likeCount, commentCount;
-    ImageView thumbnail;
-    ImageButton btnBack, btnLike, btnSave, btnComment, btnMore;
+    ImageView thumbnail,miniPlayerThumbnail;
+    ImageButton btnBack, btnLike, btnSave, btnComment, btnMore, btnRead;
     TextView categoryTextView, authorName;
+    private TextToSpeech textToSpeech;
+    private boolean isReading = false;
+    private boolean isPaused = false;
+    private LinearLayout miniPlayer;
+    private ImageButton miniPlayerPlayPause;
+    private TextView miniPlayerTitle;
+    private ImageButton miniPlayerStop;
     Context context;
     private static final int LOGIN_REQUEST_CODE = 100;
 
@@ -42,7 +54,18 @@ public class DetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_detail);
 
         initView();
+        textToSpeech = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
 
+                int result = textToSpeech.setLanguage(new Locale("vi", "VN"));
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    Toast.makeText(this, "Ngôn ngữ tiếng Việt không được hỗ trợ trên thiết bị này", Toast.LENGTH_SHORT).show();
+                }
+
+            } else {
+                Toast.makeText(this, "Khởi tạo TextToSpeech thất bại", Toast.LENGTH_SHORT).show();
+            }
+        });
         btnBack.setOnClickListener(v -> {
             finish();
         });
@@ -163,6 +186,46 @@ public class DetailActivity extends AppCompatActivity {
         btnMore.setOnClickListener(v -> {
             showPopupMenu(v);
         });
+        btnRead.setOnClickListener(v -> {
+            String content = contentTextView.getText().toString();
+            if (!isReading) {
+                textToSpeech.speak(content, TextToSpeech.QUEUE_FLUSH, null, "article_content");
+
+                isReading = true;
+                isPaused = false;
+
+                miniPlayer.setVisibility(View.VISIBLE);
+                miniPlayerPlayPause.setImageResource(R.drawable.pause_icon);
+                miniPlayerTitle.setSelected(true);
+                miniPlayerTitle.setText(title.getText().toString());
+
+                Picasso.get().load(article.getUrlToImage()).into(miniPlayerThumbnail);
+            }
+        });
+
+        miniPlayerPlayPause.setOnClickListener(v -> {
+            String content = contentTextView.getText().toString();
+            if (isReading && !isPaused) {
+
+                textToSpeech.stop();
+                miniPlayerPlayPause.setImageResource(R.drawable.play_ic);
+                isReading = true;
+                isPaused = true;
+            } else if (isReading && isPaused) {
+
+                textToSpeech.speak(content, TextToSpeech.QUEUE_FLUSH, null, "article_content");
+                miniPlayerPlayPause.setImageResource(R.drawable.pause_icon);
+                isReading = true;
+                isPaused = false;
+            }
+        });
+
+        miniPlayerStop.setOnClickListener(v -> {
+            textToSpeech.stop();
+            miniPlayer.setVisibility(View.GONE);
+            isReading = false;
+            isPaused = false;
+        });
     }
 
     private void initView() {
@@ -179,6 +242,12 @@ public class DetailActivity extends AppCompatActivity {
         authorName = findViewById(R.id.authorName);
         btnMore = findViewById(R.id.btnMore);
         commentCount = findViewById(R.id.commentCount);
+        btnRead = findViewById(R.id.btn_read);
+        miniPlayer = findViewById(R.id.miniPlayer);
+        miniPlayerPlayPause = findViewById(R.id.miniPlayerPlayPause);
+        miniPlayerTitle = findViewById(R.id.miniPlayerTitle);
+        miniPlayerStop = findViewById(R.id.miniPlayerStop);
+        miniPlayerThumbnail = findViewById(R.id.miniPlayerThumbnail);
     }
 
     private void showPopupMenu(android.view.View view) {
@@ -242,5 +311,14 @@ public class DetailActivity extends AppCompatActivity {
         shareIntent.setType("text/plain");
         shareIntent.putExtra(Intent.EXTRA_TEXT, article.getTitle() + "\n" + article.getLink());
         startActivity(Intent.createChooser(shareIntent, "Chia sẻ bài viết"));
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+
+        }
     }
 }

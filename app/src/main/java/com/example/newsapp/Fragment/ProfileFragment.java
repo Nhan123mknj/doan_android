@@ -206,13 +206,14 @@ public class ProfileFragment extends Fragment {
         }
         String uid = user.getUid();
         usersViewModel.getUserById(uid).observe(getViewLifecycleOwner(), userObj -> {
-            if (userObj != null) {
+            if(userObj==null){
+
+            }
                 name.setText(userObj.getName());
                 email.setText(userObj.getEmail());
                 tvDescription.setText(userObj.getDescription());
                 Picasso.get().load(userObj.getAvatarUrl()).into(avatar);
                 newsCount.setText(String.valueOf(userObj.getCountViews()));
-            }
         });
 
     }

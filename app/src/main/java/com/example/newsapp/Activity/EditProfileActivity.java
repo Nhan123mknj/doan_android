@@ -48,6 +48,7 @@ public class EditProfileActivity extends AppCompatActivity {
     CircleImageView profileImage;
     UsersViewModel usersViewModel;
     private String userId;
+    private Users currentUser;
     private Uri selectedImageUri = null;
 
 
@@ -96,13 +97,14 @@ public class EditProfileActivity extends AppCompatActivity {
             String newEmail = email.getText().toString().trim();
             String newDescription = description.getText().toString().trim();
 
-            // Tạo đối tượng Users mới
             Users updatedUser = new Users();
             updatedUser.setUserId(userId);
             updatedUser.setName(newName);
             updatedUser.setEmail(newEmail);
             updatedUser.setDescription(newDescription);
-
+            if (currentUser != null) {
+                updatedUser.setAvatarUrl(currentUser.getAvatarUrl());
+            }
             if (selectedImageUri != null) {
                 MediaManager.get().upload(selectedImageUri)
                         .option("folder", "avatars")
