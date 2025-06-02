@@ -8,8 +8,7 @@
     android:gravity="center_horizontal"
     tools:context=".Activity.DetailActivity"
     android:padding="10dp"
-    android:fitsSystemWindows="true"
-    >
+    android:fitsSystemWindows="true">
 
     <!-- Thanh header -->
     <LinearLayout
@@ -18,8 +17,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        >
+        android:paddingEnd="16dp">
 
         <ImageButton
             android:id="@+id/btnBack"
@@ -46,9 +44,14 @@
                 android:background="?attr/selectableItemBackground"
                 android:padding="0dp"/>
 
-            <ImageButton                android:id="@+id/btnMore"                android:layout_width="24dp"                android:layout_height="24dp"                android:src="@drawable/icon_more"                android:background="?attr/selectableItemBackground"                android:padding="0dp"/>
+            <ImageButton
+                android:id="@+id/btnMore"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/icon_more"
+                android:background="?attr/selectableItemBackground"
+                android:padding="0dp"/>
         </LinearLayout>
-
     </LinearLayout>
 
     <!-- Nội dung scroll -->
@@ -160,9 +163,60 @@
                 android:textSize="16sp"
                 android:padding="10dp"/>
         </LinearLayout>
-
     </ScrollView>
+    <LinearLayout
+        android:layout_margin="10dp"
+        android:id="@+id/miniPlayer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_radius_boder"
+        android:padding="10dp"
+        android:visibility="gone"
+        android:gravity="center_vertical">
 
+
+        <ImageView
+            android:background="@drawable/bg_radius_boder"
+            android:id="@+id/miniPlayerThumbnail"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/img_trending"
+            />
+        <TextView
+            android:id="@+id/miniPlayerTitle"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Đang đọc bài viết..."
+            android:textColor="@color/black"
+            android:fontFamily="@font/poppins_regular"
+            android:layout_margin="10dp"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:singleLine="true"
+            android:scrollHorizontally="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true" />
+
+        <ImageButton
+            android:id="@+id/miniPlayerPlayPause"
+            android:padding="15dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginEnd="10dp"
+            android:background="@null"
+            android:scaleType="centerInside"
+            android:src="@drawable/pause_icon" />
+
+        <ImageButton
+            android:id="@+id/miniPlayerStop"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@null"
+            android:src="@drawable/x_icon"
+            android:scaleType="centerInside"/>
+    </LinearLayout>
     <!-- Thanh action dưới -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -228,6 +282,16 @@
             android:layout_weight="1" />
 
         <ImageButton
+            android:layout_marginEnd="10dp"
+            android:padding="10dp"
+            android:id="@+id/btn_read"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@null"
+            android:scaleType="centerInside"
+            android:src="@drawable/read_aloud_ic" />
+
+        <ImageButton
             android:id="@+id/btn_save"
             android:layout_width="50dp"
             android:layout_height="50dp"
@@ -235,5 +299,4 @@
             android:src="@drawable/save_selector"
             android:padding="0dp"/>
     </LinearLayout>
-
 </LinearLayout>

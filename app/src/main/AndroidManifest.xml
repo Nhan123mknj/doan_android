@@ -4,7 +4,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    
     <application
         android:name=".NewsApp"
         android:allowBackup="true"
@@ -17,6 +18,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NewsApp"
         tools:targetApi="31">
+        <service
+            android:name=".Services.TTSService"
+            android:enabled="true"
+            android:exported="false" />
         <activity
             android:name=".Activity.UpdateArticlesActivity"
             android:exported="false" />

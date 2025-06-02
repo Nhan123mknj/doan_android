@@ -3,6 +3,7 @@ package com.example.newsapp.Activity;
 import static android.app.PendingIntent.getActivity;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,6 +13,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -59,6 +61,7 @@ public class AddArticlesActivity extends AppCompatActivity {
     private ImageView imageView;
     private Button btnPublish;
     private Uri selectedImageUri = null;
+    ImageButton btnBack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +75,7 @@ public class AddArticlesActivity extends AppCompatActivity {
         });
 
         initView();
+
         categoriesViewModel = new ViewModelProvider(this, new ViewModelProvider.AndroidViewModelFactory(getApplication())).get(CategoriesViewModel.class);
 
         articlesViewModel = new ViewModelProvider(this, new ViewModelProvider.AndroidViewModelFactory(getApplication())).get(ArticlesViewModel.class);
@@ -95,7 +99,9 @@ public class AddArticlesActivity extends AppCompatActivity {
             });
         });
 
-
+        btnBack.setOnClickListener(v -> {
+            finish();
+        });
 
         FirebaseAuth user = FirebaseAuth.getInstance();
 
@@ -140,7 +146,7 @@ public class AddArticlesActivity extends AppCompatActivity {
                                 String imageUrl = (String) resultData.get("secure_url");
                                 articles.setUrlToImage(imageUrl);
                                 runOnUiThread(() -> {
-                                    articlesViewModel.addArticle(articles);
+                                    articlesViewModel.addArticle(articles,AddArticlesActivity.this);
                                     Toast.makeText(AddArticlesActivity.this, "Đã cập nhật thông tin!", Toast.LENGTH_SHORT).show();
                                     finish();
                                 });
@@ -163,16 +169,32 @@ public class AddArticlesActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        PermissionUtils.handlePermissionResult(requestCode, grantResults, this);
+        if (requestCode == PermissionUtils.MY_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d("AddArticlesActivity", "Quyền đã được cấp, mở thư viện ảnh.");
+                PermissionUtils.openGallery(this, PermissionUtils.MY_REQUEST_CODE);
+            } else {
+                Log.d("AddArticlesActivity", "Quyền bị từ chối.");
+                Toast.makeText(this, "Bạn cần cấp quyền để chọn ảnh.", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PermissionUtils.MY_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
             Uri uri = data.getData();
-            selectedImageUri = uri;
-            imageView.setVisibility(View.VISIBLE);
-            imageView.setImageURI(uri);
+            if (uri != null) {
+                Log.d("AddArticlesActivity", "URI ảnh: " + uri.toString());
+                selectedImageUri = uri;
+                imageView.setVisibility(View.VISIBLE);
+                imageView.setImageURI(uri);
+            } else {
+                Log.d("AddArticlesActivity", "Không nhận được URI ảnh.");
+                Toast.makeText(this, "Không thể chọn ảnh.", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Log.d("AddArticlesActivity", "Kết quả không hợp lệ hoặc không có dữ liệu.");
         }
     }
 
@@ -184,5 +206,6 @@ public class AddArticlesActivity extends AppCompatActivity {
         thumbnailImage = findViewById(R.id.addThumbnail);
         imageView = findViewById(R.id.imgCover);
         btnPublish = findViewById(R.id.btnPublish);
+        btnBack = findViewById(R.id.btnBack);
     }
 }

@@ -1,24 +1,27 @@
 package com.example.newsapp.ViewModel;
 
+import android.app.Application;
+
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 
-import com.example.newsapp.Model.Comments;
 import com.example.newsapp.Model.Users;
 import com.example.newsapp.Repository.UserRespository;
-import com.google.firebase.firestore.auth.User;
+
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class UsersViewModel extends ViewModel {
+public class UsersViewModel extends AndroidViewModel {
     private final UserRespository userRespository;
     private MutableLiveData<List<Users>> usersLiveData;
     private List<Users> usersList;
 
-    public UsersViewModel() {
-        this.userRespository = new UserRespository();
+    public UsersViewModel(@NonNull Application application) {
+        super(application);
+        this.userRespository = new UserRespository(application);
         usersLiveData = new MutableLiveData<>();
         usersList = new ArrayList<>();
         usersLiveData.setValue(usersList);

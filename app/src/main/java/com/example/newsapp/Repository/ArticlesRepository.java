@@ -46,7 +46,7 @@ public class ArticlesRepository {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Map<String, String> categoryMap = new HashMap<>();
     private final Map<String, String> userNameMap = new HashMap<>();
-
+    private final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
     public ArticlesRepository() {
         loadCategories();
         loadUsers();
@@ -163,7 +163,7 @@ public class ArticlesRepository {
      * @param listener Callback for success or error.
      */
     public void updateLikeCount(String articleId, Context context, OnLikeResultListener listener) {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
         if (currentUser == null) {
             mainHandler.post(() -> DialogLogin.openDialogLogin(context, Gravity.CENTER, () -> {
                 Intent loginIntent = new Intent(context, LoginActivity.class);
@@ -273,7 +273,15 @@ public class ArticlesRepository {
         return articlesLiveData;
     }
 
-    public void addArticle(Articles article) {
+    public void addArticle(Articles article,Context context) {
+        if (currentUser == null) {
+            mainHandler.post(() -> DialogLogin.openDialogLogin(context, Gravity.CENTER, () -> {
+                Intent loginIntent = new Intent(context, LoginActivity.class);
+                ((Activity) context).startActivityForResult(loginIntent, 100);
+            }));
+            Log.e("ArticlesRepository", "Login required");
+            return;
+        }
         long currentTimeMillis = System.currentTimeMillis();
         SimpleDateFormat inputFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.ENGLISH);
         String currentDateString = inputFormat.format(new Date(currentTimeMillis));
@@ -420,13 +428,13 @@ public class ArticlesRepository {
             try {
                 Map result = MediaManager.get().getCloudinary().uploader().destroy(publicId, ObjectUtils.emptyMap());
                 if ("ok".equals(result.get("result"))) {
-                    resultLiveData.postValue(true); // Xóa thành công
+                    resultLiveData.postValue(true);
                 } else {
-                    resultLiveData.postValue(false); // Xóa thất bại
+                    resultLiveData.postValue(false);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                resultLiveData.postValue(false); // Lỗi khi xóa ảnh
+                resultLiveData.postValue(false);
             }
         }).start();
 

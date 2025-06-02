@@ -67,8 +67,8 @@ public class ArticlesViewModel extends ViewModel {
     public LiveData<Boolean> getLikeStatus(String articleId, String userId) {
         return articlesRepository.getLikeStatus(articleId, userId);
     }
-    public void addArticle(Articles article) {
-        articlesRepository.addArticle(article);
+    public void addArticle(Articles article,Context context) {
+        articlesRepository.addArticle(article,context);
     }
     public LiveData<List<Articles>> getArticlesByCategory(String categoryId) {
         return articlesRepository.getArticlesByCategory(categoryId);
