@@ -20,6 +20,7 @@ import android.widget.Toast;
 import com.example.newsapp.Activity.AddArticlesActivity;
 import com.example.newsapp.Activity.DetailActivity;
 import com.example.newsapp.Activity.EditProfileActivity;
+import com.example.newsapp.Activity.LoginActivity;
 import com.example.newsapp.Activity.SettingActivity;
 import com.example.newsapp.Activity.UpdateArticlesActivity;
 import com.example.newsapp.Adapter.ArticlesAdapter;
@@ -44,7 +45,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
  * create an instance of this fragment.
  */
 public class ProfileFragment extends Fragment {
-    private TextView name, email, phone,tvDescription,newsCount;
+    private TextView name, email, followerCount,followingCount,tvDescription,newsCount;
     private CircleImageView avatar;
     private RecyclerView recyclerView;
     private Button btnEditProfile, btnWebsite, btnSetting;
@@ -95,8 +96,17 @@ public class ProfileFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            // Người dùng chưa đăng nhập → chuyển sang LoginActivity
+            Intent intent = new Intent(getActivity(), LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            requireActivity().finish(); // Đóng MainActivity để không quay lại
+            return view;
+        }
         initView(view);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -143,10 +153,21 @@ public class ProfileFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         usersViewModel = new ViewModelProvider(this).get(UsersViewModel.class);
-        showUserInformation();
+        showUserInformation(user);
 
         articlesViewModel = new ViewModelProvider(this).get(ArticlesViewModel.class);
         showArticlesByUser(adapter);
+
+        followerCount.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), FollowerActivity.class);
+            intent.putExtra("userId", user.getUid());
+            startActivity(intent);
+        });
+        followingCount.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), FollowerActivity.class);
+            intent.putExtra("userId", user.getUid());
+            startActivity(intent);
+        });
 
         btnSetting.setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), SettingActivity.class);
@@ -187,7 +208,7 @@ public class ProfileFragment extends Fragment {
 
     private void initView(View view) {
         name = view.findViewById(R.id.username);
-        email = view.findViewById(R.id.tvDescription);
+        email = view.findViewById(R.id.tvEmail);
         newsCount = view.findViewById(R.id.newsCount);
         avatar = view.findViewById(R.id.profileImage);
         btnEditProfile = view.findViewById(R.id.btnEditProfile);
@@ -196,24 +217,23 @@ public class ProfileFragment extends Fragment {
         tvDescription = view.findViewById(R.id.tvDescription);
         btnAddArticles = view.findViewById(R.id.floatingActionButton);
         recyclerView = view.findViewById(R.id.rvNews);
+        followerCount = view.findViewById(R.id.followerCount);
+        followingCount = view.findViewById(R.id.followingCount);
     }
 
 
-    private void showUserInformation(){
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if(user == null){
-            return;
-        }
-        String uid = user.getUid();
-        usersViewModel.getUserById(uid).observe(getViewLifecycleOwner(), userObj -> {
-            if(userObj==null){
+    private void showUserInformation(FirebaseUser user){
+        if (user == null) return;
 
-            }
-                name.setText(userObj.getName());
-                email.setText(userObj.getEmail());
-                tvDescription.setText(userObj.getDescription());
-                Picasso.get().load(userObj.getAvatarUrl()).into(avatar);
-                newsCount.setText(String.valueOf(userObj.getCountViews()));
+        usersViewModel.getUserById(user.getUid()).observe(getViewLifecycleOwner(), userObj -> {
+            if(userObj == null) return;
+            name.setText(userObj.getName());
+            email.setText(userObj.getEmail());
+            tvDescription.setText(userObj.getDescription());
+            Picasso.get().load(userObj.getAvatarUrl()).into(avatar);
+            newsCount.setText(String.valueOf(userObj.getCountViews()));
+            followerCount.setText(String.valueOf(userObj.getFollowerCount()));
+            followingCount.setText(String.valueOf(userObj.getFollowingCount()));
         });
 
     }

@@ -15,7 +15,7 @@ import com.example.newsapp.R;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class SettingActivity extends AppCompatActivity {
-    LinearLayout logout, changePass;
+    LinearLayout logout, changePass, sendMail;
     ImageButton btnBack;
 
 
@@ -30,11 +30,12 @@ public class SettingActivity extends AppCompatActivity {
             return insets;
         });
 
-        logout = findViewById(R.id.logout);
-        btnBack = findViewById(R.id.btnBack);
-        changePass = findViewById(R.id.changePass);
+        initViews();
         btnBack.setOnClickListener(v -> finish());
-
+        sendMail.setOnClickListener(v -> {
+            Intent intent = new Intent(this, SendMailActivity.class);
+            startActivity(intent);
+        });
         changePass.setOnClickListener(v -> {
             Intent intent = new Intent(this, ChangePassActivity.class);
             startActivity(intent);
@@ -45,5 +46,12 @@ public class SettingActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
+    }
+
+    private void initViews() {
+        logout = findViewById(R.id.logout);
+        btnBack = findViewById(R.id.btnBack);
+        changePass = findViewById(R.id.changePass);
+        sendMail = findViewById(R.id.sendMail);
     }
 }

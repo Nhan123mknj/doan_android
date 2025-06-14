@@ -26,6 +26,9 @@ public class UsersViewModel extends AndroidViewModel {
         usersList = new ArrayList<>();
         usersLiveData.setValue(usersList);
     }
+    public LiveData<List<Users>> getAllAuthors() {
+        return userRespository.getAllAuthors();
+    }
     public LiveData<Users> getUserById(String userId) {
         return userRespository.getUserById(userId);
     }
@@ -37,5 +40,17 @@ public class UsersViewModel extends AndroidViewModel {
     }
     public void changePass(String oldPassword, String newPassword) {
         userRespository.changePass(oldPassword, newPassword);
+    }
+    public void toggleFollowUser(String followerId, String authorId, UserRespository.OnFollowStatusChangedListener listener) {
+        userRespository.toggleFollowUser(followerId, authorId, listener);
+    }
+    public void checkFollowStatus(String followerId, String authorId, UserRespository.OnFollowStatusChangedListener listener) {
+        userRespository.checkIsFollowing(followerId, authorId, listener);
+    }
+    public LiveData<List<Users>> getFollowersDetail(String followerId) {
+        return userRespository.getFollowersDetail(followerId);
+    }
+    public LiveData<List<Users>> getFollowing(String authorId) {
+        return userRespository.getFollowingDetail(authorId);
     }
 }

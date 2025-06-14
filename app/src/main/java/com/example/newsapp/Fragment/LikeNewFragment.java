@@ -111,9 +111,8 @@ public class LikeNewFragment extends Fragment {
         String userId = user.getUid();
         Log.d("LikeNewFragment", "Loading saved articles for user: " + userId);
         
-        // Run comprehensive debug
-        articlesViewModel.debugLikedArticlesComprehensive(userId);
-        
+
+
         articlesViewModel.getArticlesBookmarkedByUser(userId).observe(getViewLifecycleOwner(), articles -> {
             Log.d("LikeNewFragment", "Observer called with articles: " + (articles == null ? "null" : articles.size() + " items"));
             

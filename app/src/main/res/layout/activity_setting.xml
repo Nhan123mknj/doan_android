@@ -41,9 +41,31 @@
                 />
         </LinearLayout>
         <LinearLayout
-            android:id="@+id/changePass"
+            android:id="@+id/sendMail"
             android:padding="16dp"
             android:layout_marginTop="30dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:clickable="true">
+            <ImageButton
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:background="@drawable/send_mail_ic"/>
+            <TextView
+                android:id="@+id/tvSendEmail"
+                android:layout_marginStart="16dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Gửi góp ý cho quản trị viên"/>
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/changePass"
+            android:padding="16dp"
+
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"

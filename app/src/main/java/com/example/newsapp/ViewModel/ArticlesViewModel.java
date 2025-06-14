@@ -121,9 +121,7 @@ public class ArticlesViewModel extends ViewModel {
     /**
      * Comprehensive debug method for liked articles
      */
-    public void debugLikedArticlesComprehensive(String userId) {
-        articlesRepository.debugLikedArticlesComprehensive(userId);
-    }
+
 
     /**
      * Reports an article for admin review.
