@@ -159,12 +159,12 @@ public class ProfileFragment extends Fragment {
         showArticlesByUser(adapter);
 
         followerCount.setOnClickListener(v -> {
-            Intent intent = new Intent(getContext(), FollowerActivity.class);
+            Intent intent = new Intent(getContext(), FollowActivity.class);
             intent.putExtra("userId", user.getUid());
             startActivity(intent);
         });
         followingCount.setOnClickListener(v -> {
-            Intent intent = new Intent(getContext(), FollowerActivity.class);
+            Intent intent = new Intent(getContext(), FollowActivity.class);
             intent.putExtra("userId", user.getUid());
             startActivity(intent);
         });

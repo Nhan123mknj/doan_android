@@ -21,14 +21,12 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class AuthorAdapter extends RecyclerView.Adapter<AuthorAdapter.AuthorViewHolder> {
     private List<Users> authorList;
     private IClickItemUsersListener iClickItemAuthorListener;
-    private String layoutType;
 
-    public static final String FOLLOWER = "follower";
-    public static final String FOLLOWING = "following";
-    public AuthorAdapter(List<Users> authorList, IClickItemUsersListener iClickItemUsersListener, String layoutType) {
+
+    public AuthorAdapter(List<Users> authorList, IClickItemUsersListener iClickItemUsersListener) {
         this.authorList = authorList;
         this.iClickItemAuthorListener = iClickItemUsersListener;
-        this.layoutType = layoutType;
+
     }
 
     public void setAuthorList(List<Users> authorList) {
