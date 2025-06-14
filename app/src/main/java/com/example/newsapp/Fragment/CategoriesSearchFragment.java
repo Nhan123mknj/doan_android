@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
+import com.example.newsapp.Activity.ArticlesByCategoriesActivity;
 import com.example.newsapp.Activity.DetailActivity;
 import com.example.newsapp.Adapter.CategoriesAdapter;
 import com.example.newsapp.Interface.IClickItemArticlesListener;
@@ -100,7 +101,9 @@ public class CategoriesSearchFragment extends Fragment  {
 
             @Override
             public void onItemClickedCategories(Categories categories) {
-
+                Intent intent = new Intent(getContext(), ArticlesByCategoriesActivity.class);
+                intent.putExtra("categories", categories);
+                startActivity(intent);
             }
 
             @Override
