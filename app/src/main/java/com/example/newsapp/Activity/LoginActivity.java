@@ -21,6 +21,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
@@ -75,8 +77,19 @@ public class LoginActivity extends AppCompatActivity {
                @Override
                public void onComplete(@NonNull Task<AuthResult> task) {
                    if(task.isComplete()) {
+                       FirebaseMessaging.getInstance().getToken()
+                               .addOnCompleteListener(tokenTask -> {
+                                   if (tokenTask.isSuccessful()) {
+                                       String token = tokenTask.getResult();
+                                       String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                                       FirebaseFirestore.getInstance().collection("users")
+                                               .document(userId)
+                                               .update("fcmToken", token);
+                                   }
+                               });
                        Intent intent1 = new Intent(LoginActivity.this, HomeActivity.class);
                        startActivity(intent1);
+                       finish();
                    }else {
                        messageError.setVisibility(View.VISIBLE);
                        messageError.setText("Đăng nhập thất bại");

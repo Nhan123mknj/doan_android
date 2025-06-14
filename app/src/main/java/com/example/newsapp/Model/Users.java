@@ -15,31 +15,23 @@ public class Users implements Serializable {
 
     private String userId;
     private String name;
-
-
     private String email;
-
-
     private String avatarUrl;
-
     private Date createdAt;
     private String description;
     private String phone;
     private int countViews;
+    private int followerCount;
+    private int followingCount;
     public Users() {
 
     }
 
-    public Users(String userId, String name, String email, String avatarUrl, Date createdAt, String description, String phone) {
-        this.userId = userId;
-        this.name = name;
-        this.email = email;
-        this.avatarUrl = avatarUrl;
-        this.createdAt = createdAt;
-        this.description = description;
-        this.phone = phone;
-    }
 
+    public int getFollowerCount() { return followerCount; }
+    public void setFollowerCount(int count) { this.followerCount = count; }
+    public int getFollowingCount() { return followingCount; }
+    public void setFollowingCount(int count) { this.followingCount = count; }
     public int getCountViews() {
         return countViews;
     }

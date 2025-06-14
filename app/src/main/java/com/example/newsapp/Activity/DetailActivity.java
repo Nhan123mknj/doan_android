@@ -1,12 +1,19 @@
 package com.example.newsapp.Activity;
 
+import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -17,12 +24,17 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.example.newsapp.Helper.DialogLogin;
 import com.example.newsapp.Helper.DialogReport;
 import com.example.newsapp.Model.Articles;
 import com.example.newsapp.R;
 import com.example.newsapp.Repository.ArticlesRepository;
+import com.example.newsapp.Repository.UserRespository;
+import com.example.newsapp.Services.TSSServices;
 import com.example.newsapp.ViewModel.ArticlesViewModel;
+import com.example.newsapp.ViewModel.UsersViewModel;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.squareup.picasso.Picasso;
@@ -30,47 +42,79 @@ import com.squareup.picasso.Picasso;
 import java.util.Locale;
 
 public class DetailActivity extends AppCompatActivity {
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private Articles article;
     private ArticlesViewModel viewModel;
-
-    TextView contentTextView, title, date, likeCount, commentCount;
+    private UsersViewModel userviewModel;
+    TextView contentTextView, title, date, likeCount, commentCount,miniPlayerTitle;
     ImageView thumbnail,miniPlayerThumbnail;
-    ImageButton btnBack, btnLike, btnSave, btnComment, btnMore, btnRead;
+    ImageButton btnBack, btnLike, btnSave, btnComment, btnMore, btnRead,miniPlayerPlayPause,miniPlayerStop;
     TextView categoryTextView, authorName;
-    private TextToSpeech textToSpeech;
     private boolean isReading = false;
     private boolean isPaused = false;
+    private Button followButton;
     private LinearLayout miniPlayer;
-    private ImageButton miniPlayerPlayPause;
-    private TextView miniPlayerTitle;
-    private ImageButton miniPlayerStop;
-    Context context;
-    private static final int LOGIN_REQUEST_CODE = 100;
+
+    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+    private BroadcastReceiver myReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Bundle bundle = intent.getExtras();
+            if (bundle == null) {
+                return;
+            }
+            article = (Articles) bundle.get("articleObj");
+            isReading = bundle.getBoolean("isReading");
+            int actionReading = bundle.getInt("action_reading");
+            handleLayoutReading(actionReading);
+        }
+    };
+
+    private void handleLayoutReading(int actionReading) {
+        switch (actionReading) {
+            case TSSServices.ACTION_START:
+                miniPlayer.setVisibility(View.VISIBLE);
+                miniPlayerPlayPause.setImageResource(R.drawable.pause_icon);
+                miniPlayerTitle.setSelected(true);
+                miniPlayerTitle.setText(title.getText().toString());
+
+                Picasso.get().load(article.getUrlToImage()).into(miniPlayerThumbnail);
+                setStatusPlayPause();
+                break;
+            case TSSServices.ACTION_PAUSE:
+                isPaused = true;
+                setStatusPlayPause();
+                break;
+            case TSSServices.ACTION_RESUME:
+                isPaused = false;
+                setStatusPlayPause();
+                break;
+            case TSSServices.ACTION_CLEAR:
+                isPaused = false;
+                isReading = false;
+                miniPlayer.setVisibility(View.GONE);
+                break;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_detail);
+        LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver,
+                new IntentFilter("send_action_to_activity"));
+
 
         initView();
-        textToSpeech = new TextToSpeech(this, status -> {
-            if (status == TextToSpeech.SUCCESS) {
 
-                int result = textToSpeech.setLanguage(new Locale("vi", "VN"));
-                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    Toast.makeText(this, "Ngôn ngữ tiếng Việt không được hỗ trợ trên thiết bị này", Toast.LENGTH_SHORT).show();
-                }
-
-            } else {
-                Toast.makeText(this, "Khởi tạo TextToSpeech thất bại", Toast.LENGTH_SHORT).show();
-            }
-        });
         btnBack.setOnClickListener(v -> {
             finish();
         });
 
         viewModel = new ViewModelProvider(this).get(ArticlesViewModel.class);
+        userviewModel = new ViewModelProvider(this).get(UsersViewModel.class);
 
         Intent intent = getIntent();
         intent.getExtras();
@@ -88,7 +132,7 @@ public class DetailActivity extends AppCompatActivity {
                 Log.d("cateid", article.getArticleId());
             });
             
-            // Observe comment count
+
             viewModel.getCommentCount(article.getArticleId()).observe(this, count -> {
                 if (count != null) {
                     Log.d("DetailActivity", "Comment count: " + count);
@@ -99,7 +143,7 @@ public class DetailActivity extends AppCompatActivity {
             });
         }
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
 
         if (user != null) {
             String userId = user.getUid();
@@ -183,48 +227,63 @@ public class DetailActivity extends AppCompatActivity {
                     });
         });
 
+        followButton.setOnClickListener(v -> {
+            if (user == null) {
+                mainHandler.post(() -> DialogLogin.openDialogLogin(
+                        this,
+                        Gravity.CENTER,
+                        () -> {
+                            Intent loginIntent = new Intent(this, LoginActivity.class);
+                            ((Activity) this).startActivityForResult(loginIntent, 100);
+                        }
+                ));
+                return;
+            }
+            String userId = user.getUid();
+            userviewModel.toggleFollowUser(article.getAuthor(), userId, new UserRespository.OnFollowStatusChangedListener() {
+                @Override
+                public void onChanged(boolean isFollowing) {
+                    if (isFollowing) {
+                        followButton.setText("Đã theo dõi");
+                        Toast.makeText(DetailActivity.this, "Đã theo dõi người dùng", Toast.LENGTH_SHORT).show();
+                    } else {
+                        followButton.setText("Theo dõi");
+                        Toast.makeText(DetailActivity.this, "Đã bỏ theo dõi người dùng", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        });
+
+
         btnMore.setOnClickListener(v -> {
             showPopupMenu(v);
         });
         btnRead.setOnClickListener(v -> {
-            String content = contentTextView.getText().toString();
+
             if (!isReading) {
-                textToSpeech.speak(content, TextToSpeech.QUEUE_FLUSH, null, "article_content");
+                Intent serviceIntent = new Intent(DetailActivity.this, TSSServices.class);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("article", article);
+                bundle.putInt("actionService", TSSServices.ACTION_START);
 
-                isReading = true;
-                isPaused = false;
+                serviceIntent.putExtras(bundle);
+                startService(serviceIntent);
 
-                miniPlayer.setVisibility(View.VISIBLE);
-                miniPlayerPlayPause.setImageResource(R.drawable.pause_icon);
-                miniPlayerTitle.setSelected(true);
-                miniPlayerTitle.setText(title.getText().toString());
-
-                Picasso.get().load(article.getUrlToImage()).into(miniPlayerThumbnail);
             }
         });
 
         miniPlayerPlayPause.setOnClickListener(v -> {
-            String content = contentTextView.getText().toString();
-            if (isReading && !isPaused) {
 
-                textToSpeech.stop();
-                miniPlayerPlayPause.setImageResource(R.drawable.play_ic);
-                isReading = true;
-                isPaused = true;
-            } else if (isReading && isPaused) {
-
-                textToSpeech.speak(content, TextToSpeech.QUEUE_FLUSH, null, "article_content");
-                miniPlayerPlayPause.setImageResource(R.drawable.pause_icon);
-                isReading = true;
-                isPaused = false;
+            if (isReading ) {
+               sendActionToService(TSSServices.ACTION_PAUSE);
+            } else{
+               sendActionToService(TSSServices.ACTION_RESUME);
             }
         });
 
         miniPlayerStop.setOnClickListener(v -> {
-            textToSpeech.stop();
-            miniPlayer.setVisibility(View.GONE);
-            isReading = false;
-            isPaused = false;
+            sendActionToService(TSSServices.ACTION_CLEAR);
+
         });
     }
 
@@ -248,6 +307,7 @@ public class DetailActivity extends AppCompatActivity {
         miniPlayerTitle = findViewById(R.id.miniPlayerTitle);
         miniPlayerStop = findViewById(R.id.miniPlayerStop);
         miniPlayerThumbnail = findViewById(R.id.miniPlayerThumbnail);
+        followButton = findViewById(R.id.followButton);
     }
 
     private void showPopupMenu(android.view.View view) {
@@ -312,13 +372,23 @@ public class DetailActivity extends AppCompatActivity {
         shareIntent.putExtra(Intent.EXTRA_TEXT, article.getTitle() + "\n" + article.getLink());
         startActivity(Intent.createChooser(shareIntent, "Chia sẻ bài viết"));
     }
+    private void setStatusPlayPause() {
+        if (isReading && !isPaused) {
+            miniPlayerPlayPause.setImageResource(R.drawable.pause_icon);
+        } else {
+            miniPlayerPlayPause.setImageResource(R.drawable.play_ic);
+        }
+    }
+    private void sendActionToService(int action) {
+        Intent intent = new Intent(this, TSSServices.class);
+        intent.putExtra("actionService", action);
+        startService(intent);
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (textToSpeech != null) {
-            textToSpeech.stop();
-            textToSpeech.shutdown();
-
-        }
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver);
     }
+
 }

@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.newsapp.Model.Follow;
 import com.example.newsapp.Model.Users;
 
 import com.google.firebase.auth.AuthCredential;
@@ -17,7 +18,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.AggregateSource;
 
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.auth.User;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class UserRespository {
@@ -51,21 +57,43 @@ public class UserRespository {
                             user.setUserId(snapshot.getId());
                             Log.d("UserRepository", "Loaded user: " + user.getName());
 
+                            // Đếm số bài viết
                             db.collection("articles")
                                     .whereEqualTo("author", userId)
                                     .count()
                                     .get(AggregateSource.SERVER)
                                     .addOnCompleteListener(task -> {
+                                        int count = 0;
                                         if (task.isSuccessful() && task.getResult() != null) {
-                                            int count = (int) task.getResult().getCount();
-                                            user.setCountViews(count);
-                                            Log.d("UserRepository", "User " + user.getName() + " has " + count + " articles.");
-                                            userLiveData.setValue(user);
-                                        } else {
-                                            Log.e("UserRepository", "Error fetching articles count: " + task.getException());
-                                            user.setCountViews(0);
-                                            userLiveData.setValue(user);
+                                            count = (int) task.getResult().getCount();
                                         }
+                                        user.setCountViews(count);
+
+                                        // Đếm số follower
+                                        db.collection("follows")
+                                                .whereEqualTo("authorId", userId)
+                                                .get()
+                                                .addOnSuccessListener(followerSnapshots -> {
+                                                    user.setFollowerCount(followerSnapshots.size());
+
+                                                    // Đếm số following
+                                                    db.collection("follows")
+                                                            .whereEqualTo("followerId", userId)
+                                                            .get()
+                                                            .addOnSuccessListener(followingSnapshots -> {
+                                                                user.setFollowingCount(followingSnapshots.size());
+                                                                userLiveData.setValue(user);
+                                                            })
+                                                            .addOnFailureListener(e -> {
+                                                                user.setFollowingCount(0);
+                                                                userLiveData.setValue(user);
+                                                            });
+                                                })
+                                                .addOnFailureListener(e -> {
+                                                    user.setFollowerCount(0);
+                                                    user.setFollowingCount(0);
+                                                    userLiveData.setValue(user);
+                                                });
                                     });
                         } else {
                             userLiveData.setValue(null);
@@ -77,7 +105,28 @@ public class UserRespository {
                 });
         return userLiveData;
     }
+    public LiveData<List<Users>> getAllAuthors()  {
+        MutableLiveData<List<Users>> authorsLiveData = new MutableLiveData<>();
+        db.collection(USERS_COLLECTION)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<Users> authors = new ArrayList<>();
+                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
+                        Users user = doc.toObject(Users.class);
+                        if (user != null) {
+                            user.setUserId(doc.getId());
+                            authors.add(user);
+                        }
+                    }
+                    authorsLiveData.setValue(authors);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("UserRepository", "Error fetching authors: " + e.getMessage());
+                    authorsLiveData.setValue(null);
+                });
+        return authorsLiveData;
 
+    }
     public void UpdateUser(String userId, Users user) {
         db.collection(USERS_COLLECTION)
                 .document(userId)
@@ -111,5 +160,116 @@ public class UserRespository {
                 Toast.makeText(context, "Mật khẩu cũ không chính xác!", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+    public void toggleFollowUser(String followerId, String authorId, OnFollowStatusChangedListener listener) {
+        String docId = followerId + "_" + authorId;
+        db.collection("follows")
+                .document(docId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        // Đã follow, unfollow
+                        db.collection("follows")
+                                .document(docId)
+                                .delete()
+                                .addOnSuccessListener(aVoid -> {
+                                    if (listener != null) listener.onChanged(false);
+                                });
+                    } else {
+                        // Chưa follow, follow
+                        db.collection("follows")
+                                .document(docId)
+                                .set(new Follow(followerId, authorId))
+                                .addOnSuccessListener(aVoid -> {
+                                    if (listener != null) listener.onChanged(true);
+                                });
+                    }
+                });
+    }
+
+    public void checkIsFollowing(String followerId, String authorId, OnFollowStatusChangedListener listener) {
+        String docId = followerId + "_" + authorId;
+        db.collection("follows")
+                .document(docId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (listener != null) listener.onChanged(documentSnapshot.exists());
+                });
+    }
+    public LiveData<List<Users>> getFollowersDetail(String myUserId) {
+        MutableLiveData<List<Users>> followersLiveData = new MutableLiveData<>();
+        db.collection("follows")
+                .whereEqualTo("authorId", myUserId)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<String> followerIds = new ArrayList<>();
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots) {
+                        followerIds.add(doc.getString("followerId"));
+                    }
+                    if (followerIds.isEmpty()) {
+                        followersLiveData.setValue(new ArrayList<>());
+                        return;
+                    }
+                    db.collection("users")
+                            .whereIn("userId", followerIds)
+                            .get()
+                            .addOnSuccessListener(userSnapshots -> {
+                                List<Users> users = new ArrayList<>();
+                                for (DocumentSnapshot userDoc : userSnapshots) {
+                                    String name = userDoc.getString("name");
+                                    String avatar = userDoc.getString("avatarUrl");
+
+                                    Users user = new Users();
+                                    user.setName(name);
+                                    user.setAvatarUrl(avatar);
+                                }
+                                followersLiveData.setValue(users);
+                            })
+                            .addOnFailureListener(e -> followersLiveData.setValue(null));
+                })
+                .addOnFailureListener(e -> followersLiveData.setValue(null));
+        return followersLiveData;
+    }
+    public LiveData<List<Users>> getFollowingDetail(String myUserId) {
+        MutableLiveData<List<Users>> followingLiveData = new MutableLiveData<>();
+        db.collection("follows")
+                .whereEqualTo("followerId", myUserId)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<String> authorIds = new ArrayList<>();
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots) {
+                        authorIds.add(doc.getString("authorId"));
+                    }
+                    if (authorIds.isEmpty()) {
+                        followingLiveData.setValue(new ArrayList<>());
+                        return;
+                    }
+                    db.collection("users")
+                            .whereIn("userId", authorIds)
+                            .get()
+                            .addOnSuccessListener(userSnapshots -> {
+                                List<Users> users = new ArrayList<>();
+                                for (DocumentSnapshot userDoc : userSnapshots) {
+                                    String name = userDoc.getString("name");
+                                    String avatar = userDoc.getString("avatarUrl");
+
+                                    Users user = new Users();
+                                    user.setName(name);
+                                    user.setAvatarUrl(avatar);
+                                }
+                                followingLiveData.setValue(users);
+                            })
+                            .addOnFailureListener(e -> followingLiveData.setValue(null));
+                })
+                .addOnFailureListener(e -> followingLiveData.setValue(null));
+        return followingLiveData;
+    }
+
+    public interface OnFollowResultListener {
+        void onFollowSuccess();
+        void onFollowFailure(String errorMessage);
+    }
+    public interface OnFollowStatusChangedListener {
+        void onChanged(boolean isFollowing);
     }
 }
