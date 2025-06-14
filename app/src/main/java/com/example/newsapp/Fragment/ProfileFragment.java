@@ -20,6 +20,7 @@ import android.widget.Toast;
 import com.example.newsapp.Activity.AddArticlesActivity;
 import com.example.newsapp.Activity.DetailActivity;
 import com.example.newsapp.Activity.EditProfileActivity;
+import com.example.newsapp.Activity.FollowActivity;
 import com.example.newsapp.Activity.LoginActivity;
 import com.example.newsapp.Activity.SettingActivity;
 import com.example.newsapp.Activity.UpdateArticlesActivity;
@@ -159,12 +160,12 @@ public class ProfileFragment extends Fragment {
         showArticlesByUser(adapter);
 
         followerCount.setOnClickListener(v -> {
-            Intent intent = new Intent(getContext(), FollowerActivity.class);
+            Intent intent = new Intent(getContext(), FollowActivity.class);
             intent.putExtra("userId", user.getUid());
             startActivity(intent);
         });
         followingCount.setOnClickListener(v -> {
-            Intent intent = new Intent(getContext(), FollowerActivity.class);
+            Intent intent = new Intent(getContext(), FollowActivity.class);
             intent.putExtra("userId", user.getUid());
             startActivity(intent);
         });

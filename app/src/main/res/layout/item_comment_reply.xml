@@ -17,16 +17,30 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Menu button for reply options -->
+    <ImageButton
+        android:id="@+id/btnReplyMenu"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Reply menu options"
+        android:src="@drawable/ic_more_vert"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/ivReplyProfilePic"
+        tools:visibility="visible" />
+
     <!-- Username of the replier -->
     <TextView
         android:id="@+id/tvReplyUsername"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
+        android:layout_marginEnd="4dp"
         android:textColor="@android:color/black"
         android:textSize="14sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btnReplyMenu"
         app:layout_constraintStart_toEndOf="@+id/ivReplyProfilePic"
         app:layout_constraintTop_toTopOf="@+id/ivReplyProfilePic"
         tools:text="Jane Doe" />
