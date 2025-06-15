@@ -18,16 +18,30 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Menu button for comment options -->
+    <ImageButton
+        android:id="@+id/btnCommentMenu"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Menu options"
+        android:src="@drawable/ic_more_vert"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/ivProfilePic"
+        tools:visibility="visible" />
+
     <!-- Username of the commenter -->
     <TextView
         android:id="@+id/tvUsername"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
+        android:layout_marginEnd="8dp"
         android:textColor="@android:color/black"
         android:textSize="16sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btnCommentMenu"
         app:layout_constraintStart_toEndOf="@+id/ivProfilePic"
         app:layout_constraintTop_toTopOf="@+id/ivProfilePic"
         tools:text="Wilson Franci" />
@@ -66,15 +80,15 @@
         android:id="@+id/tvReply"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="36dp"
-        android:layout_marginTop="12dp"
-        android:text="reply"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:text="Trả lời"
         android:textColor="@android:color/darker_gray"
         android:textSize="12sp"
-        app:layout_constraintBottom_toTopOf="@+id/tvSeeMore"
-        app:layout_constraintStart_toStartOf="@+id/tvTime"
-        app:layout_constraintTop_toBottomOf="@+id/tvComment"
-        app:layout_constraintVertical_bias="0.0" />
+        android:background="?android:attr/selectableItemBackground"
+        android:padding="4dp"
+        app:layout_constraintStart_toEndOf="@+id/tvTime"
+        app:layout_constraintTop_toBottomOf="@+id/tvComment" />
 
     <TextView
         android:id="@+id/tvSeeMore"

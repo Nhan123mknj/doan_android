@@ -749,9 +749,9 @@ public class ArticlesRepository {
     }
 
     /**
-     * Retrieves the comment count for a specific article.
+     * Retrieves the comment count for a specific article (including replies).
      * @param articleId The ID of the article.
-     * @return LiveData containing the comment count.
+     * @return LiveData containing the total comment count (parent comments + replies).
      */
     public LiveData<Integer> getCommentCount(String articleId) {
         MutableLiveData<Integer> commentCountLiveData = new MutableLiveData<>();
@@ -771,12 +771,31 @@ public class ArticlesRepository {
                         return;
                     }
                     
-                    int commentCount = 0;
+                    int totalCommentCount = 0;
                     if (value != null) {
-                        commentCount = value.size();
+                        // Đếm số bình luận cha
+                        int parentCommentCount = value.size();
+                        totalCommentCount = parentCommentCount;
+                        
+                        // Đếm số replies trong mỗi bình luận cha
+                        int replyCount = 0;
+                        for (DocumentSnapshot doc : value.getDocuments()) {
+                            try {
+                                List<Map<String, Object>> replies = (List<Map<String, Object>>) doc.get("replies");
+                                if (replies != null) {
+                                    replyCount += replies.size();
+                                }
+                            } catch (Exception e) {
+                                Log.w("ArticlesRepository", "Error counting replies for comment " + doc.getId() + ": " + e.getMessage());
+                            }
+                        }
+                        
+                        totalCommentCount += replyCount;
+                        Log.d("ArticlesRepository", "Comment count for article " + articleId + 
+                              ": " + parentCommentCount + " parent comments + " + replyCount + 
+                              " replies = " + totalCommentCount + " total");
                     }
-                    Log.d("ArticlesRepository", "Comment count for article " + articleId + ": " + commentCount);
-                    commentCountLiveData.setValue(commentCount);
+                    commentCountLiveData.setValue(totalCommentCount);
                 });
         return commentCountLiveData;
     }

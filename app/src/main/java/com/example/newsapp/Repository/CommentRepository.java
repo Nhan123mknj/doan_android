@@ -73,6 +73,21 @@ public class CommentRepository {
                     if (comment != null) {
                         comment.setCommentId(doc.getId());
                         comment.setUsername(userNameMap.get(comment.getUserId()));
+                        
+                        // Thiết lập username cho replies
+                        List<Reply> replies = comment.getReplies();
+                        if (replies != null) {
+                            for (Reply reply : replies) {
+                                if (reply != null && reply.getUserId() != null) {
+                                    String replyUsername = userNameMap.get(reply.getUserId());
+                                    if (replyUsername != null && !replyUsername.isEmpty()) {
+                                        reply.setUsername(replyUsername);
+                                    }
+                                    Log.d("CommentRepository", "Reply username set: " + reply.getUsername() + " for userId: " + reply.getUserId());
+                                }
+                            }
+                        }
+                        
                         comments.add(comment);
                     }
                 }
@@ -114,36 +129,186 @@ public class CommentRepository {
             Log.e("CommentRepository", "Invalid articleId, commentId, or reply");
             return;
         }
+        
+        Log.d("CommentRepository", "Adding reply to comment: " + commentId);
         DocumentReference commentRef = db.collection(COMMENTS_COLLECTION)
                 .document(articleId)
                 .collection(COMMENT_LIST_SUBCOLLECTION)
                 .document(commentId);
-        commentRef.get().addOnSuccessListener(documentSnapshot -> {
-            if (documentSnapshot.exists()) {
-                Comments comment = documentSnapshot.toObject(Comments.class);
-                if (comment != null) {
-                    List<Reply> replies = comment.getReplies();
-                    if (replies == null) {
-                        replies = new ArrayList<>();
-                    }
-                    reply.setReplyId(commentRef.collection("replies").document().getId());
-                    replies.add(reply);
-                    comment.setReplies(replies);
-                    commentRef.set(comment)
-                            .addOnSuccessListener(aVoid -> Log.d("CommentRepository", "Reply added to comment: " + commentId))
-                            .addOnFailureListener(e -> Log.e("CommentRepository", "Error updating comment with reply: " + e.getMessage()));
-                } else {
-                    Log.e("CommentRepository", "Invalid comment data");
-                }
-            } else {
-                Log.e("CommentRepository", "Comment not found: " + commentId);
+                
+        // Use transaction to ensure atomic update
+        db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(commentRef);
+            if (!snapshot.exists()) {
+                throw new RuntimeException("Comment not found: " + commentId);
             }
+            
+            Comments comment = snapshot.toObject(Comments.class);
+            if (comment == null) {
+                throw new RuntimeException("Invalid comment data");
+            }
+            
+            List<Reply> replies = comment.getReplies();
+            if (replies == null) {
+                replies = new ArrayList<>();
+            }
+            
+            // Generate unique reply ID
+            reply.setReplyId(db.collection("temp").document().getId());
+            replies.add(reply);
+            comment.setReplies(replies);
+            
+            // Update the comment with new reply
+            transaction.set(commentRef, comment);
+            return null;
+        }).addOnSuccessListener(aVoid -> {
+            Log.d("CommentRepository", "Reply added successfully to comment: " + commentId);
         }).addOnFailureListener(e -> {
-            Log.e("CommentRepository", "Error fetching comment for reply: " + e.getMessage());
+            Log.e("CommentRepository", "Error adding reply: " + e.getMessage());
         });
     }
 
+    /**
+     * Updates a comment's content.
+     * @param articleId The ID of the article.
+     * @param commentId The ID of the comment.
+     * @param newContent The new content for the comment.
+     */
+    public void updateComment(String articleId, String commentId, String newContent) {
+        if (articleId == null || commentId == null || newContent == null) {
+            Log.e("CommentRepository", "Invalid parameters for updateComment");
+            return;
+        }
+        
+        DocumentReference commentRef = db.collection(COMMENTS_COLLECTION)
+                .document(articleId)
+                .collection(COMMENT_LIST_SUBCOLLECTION)
+                .document(commentId);
+                
+        commentRef.update("content", newContent, "timestamp", System.currentTimeMillis())
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("CommentRepository", "Comment updated successfully: " + commentId);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("CommentRepository", "Error updating comment: " + e.getMessage());
+                });
+    }
 
+    /**
+     * Deletes a comment.
+     * @param articleId The ID of the article.
+     * @param commentId The ID of the comment.
+     */
+    public void deleteComment(String articleId, String commentId) {
+        if (articleId == null || commentId == null) {
+            Log.e("CommentRepository", "Invalid parameters for deleteComment");
+            return;
+        }
+        
+        DocumentReference commentRef = db.collection(COMMENTS_COLLECTION)
+                .document(articleId)
+                .collection(COMMENT_LIST_SUBCOLLECTION)
+                .document(commentId);
+                
+        commentRef.delete()
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("CommentRepository", "Comment deleted successfully: " + commentId);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("CommentRepository", "Error deleting comment: " + e.getMessage());
+                });
+    }
+
+    /**
+     * Updates a reply's content.
+     * @param articleId The ID of the article.
+     * @param commentId The ID of the comment.
+     * @param replyId The ID of the reply.
+     * @param newContent The new content for the reply.
+     */
+    public void updateReply(String articleId, String commentId, String replyId, String newContent) {
+        if (articleId == null || commentId == null || replyId == null || newContent == null) {
+            Log.e("CommentRepository", "Invalid parameters for updateReply");
+            return;
+        }
+        
+        DocumentReference commentRef = db.collection(COMMENTS_COLLECTION)
+                .document(articleId)
+                .collection(COMMENT_LIST_SUBCOLLECTION)
+                .document(commentId);
+                
+        db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(commentRef);
+            if (!snapshot.exists()) {
+                throw new RuntimeException("Comment not found: " + commentId);
+            }
+            
+            Comments comment = snapshot.toObject(Comments.class);
+            if (comment == null) {
+                throw new RuntimeException("Invalid comment data");
+            }
+            
+            List<Reply> replies = comment.getReplies();
+            if (replies != null) {
+                for (Reply reply : replies) {
+                    if (reply != null && replyId.equals(reply.getReplyId())) {
+                        reply.setContent(newContent);
+                        reply.setTimestamp(System.currentTimeMillis());
+                        break;
+                    }
+                }
+                comment.setReplies(replies);
+                transaction.set(commentRef, comment);
+            }
+            return null;
+        }).addOnSuccessListener(aVoid -> {
+            Log.d("CommentRepository", "Reply updated successfully: " + replyId);
+        }).addOnFailureListener(e -> {
+            Log.e("CommentRepository", "Error updating reply: " + e.getMessage());
+        });
+    }
+
+    /**
+     * Deletes a reply.
+     * @param articleId The ID of the article.
+     * @param commentId The ID of the comment.
+     * @param replyId The ID of the reply.
+     */
+    public void deleteReply(String articleId, String commentId, String replyId) {
+        if (articleId == null || commentId == null || replyId == null) {
+            Log.e("CommentRepository", "Invalid parameters for deleteReply");
+            return;
+        }
+        
+        DocumentReference commentRef = db.collection(COMMENTS_COLLECTION)
+                .document(articleId)
+                .collection(COMMENT_LIST_SUBCOLLECTION)
+                .document(commentId);
+                
+        db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(commentRef);
+            if (!snapshot.exists()) {
+                throw new RuntimeException("Comment not found: " + commentId);
+            }
+            
+            Comments comment = snapshot.toObject(Comments.class);
+            if (comment == null) {
+                throw new RuntimeException("Invalid comment data");
+            }
+            
+            List<Reply> replies = comment.getReplies();
+            if (replies != null) {
+                replies.removeIf(reply -> reply != null && replyId.equals(reply.getReplyId()));
+                comment.setReplies(replies);
+                transaction.set(commentRef, comment);
+            }
+            return null;
+        }).addOnSuccessListener(aVoid -> {
+            Log.d("CommentRepository", "Reply deleted successfully: " + replyId);
+        }).addOnFailureListener(e -> {
+            Log.e("CommentRepository", "Error deleting reply: " + e.getMessage());
+        });
+    }
 
     /**
      * Gets the LiveData for errors.

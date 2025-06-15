@@ -17,6 +17,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.newsapp.Helper.GalleryUtils;
+
 import com.example.newsapp.R;
 
 public class MainActivity extends AppCompatActivity {

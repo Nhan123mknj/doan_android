@@ -30,6 +30,23 @@ public class CommentViewModel extends ViewModel{
     public void addReply(String articleId, String commentId, Reply reply){
         commentRepository.addReply(articleId, commentId, reply);
     }
+
+    public void updateComment(String articleId, String commentId, String newContent) {
+        commentRepository.updateComment(articleId, commentId, newContent);
+    }
+
+    public void deleteComment(String articleId, String commentId) {
+        commentRepository.deleteComment(articleId, commentId);
+    }
+
+    public void updateReply(String articleId, String commentId, String replyId, String newContent) {
+        commentRepository.updateReply(articleId, commentId, replyId, newContent);
+    }
+
+    public void deleteReply(String articleId, String commentId, String replyId) {
+        commentRepository.deleteReply(articleId, commentId, replyId);
+    }
+
     public MutableLiveData<List<Comments>> getCommentsLiveData() {
         return commentsLiveData;
     }

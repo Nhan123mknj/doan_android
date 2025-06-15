@@ -18,6 +18,7 @@ import com.example.newsapp.Fragment.ProfileFragment;
 import com.example.newsapp.R;
 import com.example.newsapp.databinding.ActivityHomeBinding;
 
+
 public class HomeActivity extends AppCompatActivity {
 
     private ActivityHomeBinding binding;
