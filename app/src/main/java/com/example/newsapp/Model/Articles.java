@@ -25,6 +25,7 @@ public class Articles  implements Serializable {
     @PropertyName("username")
     private String username;
 
+    private String authorAvatar;
     @PropertyName("category_name")
     private String categoryName;
     @PropertyName("content")
@@ -76,6 +77,14 @@ public class Articles  implements Serializable {
         this.likedBy = likedBy;
         this.isFeatured = isFeatured;
         this.status = status;
+    }
+
+    public String getAuthorAvatar() {
+        return authorAvatar;
+    }
+
+    public void setAuthorAvatar(String authorAvatar) {
+        this.authorAvatar = authorAvatar;
     }
 
     public String getImagePublicId() {

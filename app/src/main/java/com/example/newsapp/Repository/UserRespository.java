@@ -37,9 +37,7 @@ public class UserRespository {
     }
 
 
-    public MutableLiveData<Users> getUserLiveData() {
-        return userLiveData;
-    }
+
 
     public LiveData<Users> getUserById(String userId) {
         MutableLiveData<Users> userLiveData = new MutableLiveData<>();
@@ -57,7 +55,6 @@ public class UserRespository {
                             user.setUserId(snapshot.getId());
                             Log.d("UserRepository", "Loaded user: " + user.getName());
 
-                            // Đếm số bài viết
                             db.collection("articles")
                                     .whereEqualTo("author", userId)
                                     .count()
@@ -168,7 +165,6 @@ public class UserRespository {
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        // Đã follow, unfollow
                         db.collection("follows")
                                 .document(docId)
                                 .delete()
@@ -176,7 +172,6 @@ public class UserRespository {
                                     if (listener != null) listener.onChanged(false);
                                 });
                     } else {
-                        // Chưa follow, follow
                         db.collection("follows")
                                 .document(docId)
                                 .set(new Follow(followerId, authorId))
@@ -222,6 +217,7 @@ public class UserRespository {
                                     Users user = new Users();
                                     user.setName(name);
                                     user.setAvatarUrl(avatar);
+                                    users.add(user);
                                 }
                                 followersLiveData.setValue(users);
                             })
@@ -232,13 +228,23 @@ public class UserRespository {
     }
     public LiveData<List<Users>> getFollowingDetail(String myUserId) {
         MutableLiveData<List<Users>> followingLiveData = new MutableLiveData<>();
+        if (myUserId == null || myUserId.isEmpty()) {
+            followingLiveData.setValue(new ArrayList<>());
+            return followingLiveData;
+        }
+
+        Log.d("UsersRepository", "Fetching follows for userId: " + myUserId);
         db.collection("follows")
                 .whereEqualTo("followerId", myUserId)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     List<String> authorIds = new ArrayList<>();
-                    for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots) {
-                        authorIds.add(doc.getString("authorId"));
+                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
+                        String authorId = doc.getString("authorId");
+                        if (authorId != null) {
+                            authorIds.add(authorId);
+                            Log.d("UsersRepository", "Found authorId: " + authorId);
+                        }
                     }
                     if (authorIds.isEmpty()) {
                         followingLiveData.setValue(new ArrayList<>());
@@ -250,18 +256,28 @@ public class UserRespository {
                             .addOnSuccessListener(userSnapshots -> {
                                 List<Users> users = new ArrayList<>();
                                 for (DocumentSnapshot userDoc : userSnapshots) {
+                                    String userId = userDoc.getId();
                                     String name = userDoc.getString("name");
                                     String avatar = userDoc.getString("avatarUrl");
 
                                     Users user = new Users();
+                                    user.setUserId(userId);
                                     user.setName(name);
                                     user.setAvatarUrl(avatar);
+                                    users.add(user);
                                 }
+                                Log.d("UsersRepository", "Loaded " + users.size() + " followed users");
                                 followingLiveData.setValue(users);
                             })
-                            .addOnFailureListener(e -> followingLiveData.setValue(null));
+                            .addOnFailureListener(e -> {
+                                Log.e("UsersRepository", "Error loading users: " + e.getMessage());
+                                followingLiveData.setValue(new ArrayList<>());
+                            });
                 })
-                .addOnFailureListener(e -> followingLiveData.setValue(null));
+                .addOnFailureListener(e -> {
+                    Log.e("UsersRepository", "Error fetching follows: " + e.getMessage());
+                    followingLiveData.setValue(new ArrayList<>());
+                });
         return followingLiveData;
     }
 

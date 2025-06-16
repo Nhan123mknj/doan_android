@@ -179,20 +179,22 @@
             android:layout_marginBottom="16dp">
 
             <!-- Facebook Button -->
+
+            <!-- Google Button -->
             <Button
+                android:id="@+id/btn_google"
                 android:layout_width="0dp"
                 android:layout_height="56dp"
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:background="@drawable/social_button_background"
+                android:drawableLeft="@drawable/google_icon"
                 android:text="Google"
                 android:textAllCaps="false"
                 android:textColor="#667080"
                 android:textStyle="bold"
-                app:backgroundTint="@null"
-                android:drawableLeft="@drawable/google_icon"/>
+                app:backgroundTint="@null" />
 
-            <!-- Google Button -->
             <Button
                 android:layout_width="0dp"
                 android:layout_height="56dp"

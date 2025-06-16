@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Repository for managing articles data, handling Firestore queries and
@@ -44,8 +45,10 @@ import java.util.Map;
 public class ArticlesRepository {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final MutableLiveData<List<Articles>> articlesLiveData = new MutableLiveData<>();
     private final Map<String, String> categoryMap = new HashMap<>();
     private final Map<String, String> userNameMap = new HashMap<>();
+    private final Map<String, String> userAvatarMap = new HashMap<>();
     private final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
     public ArticlesRepository() {
         loadCategories();
@@ -75,6 +78,8 @@ public class ArticlesRepository {
                                 article.setArticleId(doc.getId());
                                 article.setCategoryName(categoryMap.get(article.getCategoryId()));
                                 article.setUsername(userNameMap.get(article.getAuthor()));
+                                String avatarUrl = userAvatarMap.get(article.getAuthor());
+                                article.setAuthorAvatar(avatarUrl != null ? avatarUrl : "default_avatar_url");
                                 articles.add(article);
                             }
                         }
@@ -108,6 +113,8 @@ public class ArticlesRepository {
                                 article.setArticleId(doc.getId());
                                 article.setCategoryName(categoryMap.get(article.getCategoryId()));
                                 article.setUsername(userNameMap.get(article.getAuthor()));
+                                String avatarUrl = userAvatarMap.get(article.getAuthor());
+                                article.setAuthorAvatar(avatarUrl != null ? avatarUrl : "default_avatar_url");
                                 articles.add(article);
                             }
                         }
@@ -143,7 +150,8 @@ public class ArticlesRepository {
                     article.setArticleId(snapshot.getId());
                     article.setCategoryName(categoryMap.get(article.getCategoryId()));
                     article.setUsername(userNameMap.get(article.getAuthor()));
-                    Log.d("ArticlesRepository", "Loaded article: " + article.getTitle());
+                    String avatarUrl = userAvatarMap.get(article.getAuthor());
+                    article.setAuthorAvatar(avatarUrl != null ? avatarUrl : "default_avatar_url");
                     articleLiveData.setValue(article);
                 } else {
                     articleLiveData.setValue(null);
@@ -242,7 +250,7 @@ public class ArticlesRepository {
             articlesLiveData.setValue(new ArrayList<>());
             return articlesLiveData;
         }
-        
+
         Log.d("ArticlesRepository", "Loading articles for category: " + categoryId);
         db.collection("articles")
                 .whereEqualTo("categoryId", categoryId)
@@ -262,8 +270,9 @@ public class ArticlesRepository {
                         article.setArticleId(doc.getId());
                         article.setCategoryName(categoryMap.get(article.getCategoryId()));
                         article.setUsername(userNameMap.get(article.getAuthor()));
+                        String avatarUrl = userAvatarMap.get(article.getAuthor());
+                        article.setAuthorAvatar(avatarUrl != null ? avatarUrl : "default_avatar_url");
                         articles.add(article);
-                        Log.d("ArticlesRepository", "Added article: " + article.getTitle());
                     }
                 }
             }
@@ -299,29 +308,31 @@ public class ArticlesRepository {
     }
 
     public LiveData<List<Articles>> getArticlesByAuthor(String authorId) {
-        MutableLiveData<List<Articles>> articlesLiveData = new MutableLiveData<>();
-        db.collection("articles").whereEqualTo("author", authorId).addSnapshotListener((value, error) -> {
-            if (error != null) {
-                Log.e("ArticlesRepository", "Error fetching articles by author: " + error.getMessage());
-                articlesLiveData.setValue(new ArrayList<>());
-                return;
-            }
-            List<Articles> articles = new ArrayList<>();
-            if (value != null) {
-                for (DocumentSnapshot doc : value.getDocuments()) {
-                    Articles article = doc.toObject(Articles.class);
-                    if (article != null) {
-                        article.setArticleId(doc.getId());
-                        article.setCategoryName(categoryMap.get(article.getCategoryId()));
-                        article.setUsername(userNameMap.get(article.getAuthor()));
-                        articles.add(article);
+        MutableLiveData<List<Articles>> liveData = new MutableLiveData<>();
+
+        db.collection("articles").whereEqualTo("author", authorId)
+                .addSnapshotListener((value, error) -> {
+                    if (error != null) {
+                        liveData.postValue(new ArrayList<>());
+                        return;
                     }
-                }
-            }
-            Log.d("ArticlesRepository", "Articles fetched for author: " + authorId + ", count: " + articles.size());
-                articlesLiveData.setValue(articles);
-        });
-        return articlesLiveData;
+
+                    List<Articles> articles = new ArrayList<>();
+                    for (DocumentSnapshot doc : value.getDocuments()) {
+                        Articles article = doc.toObject(Articles.class);
+                        if (article != null) {
+                            article.setArticleId(doc.getId());
+                            article.setCategoryName(categoryMap.get(article.getCategoryId()));
+                            article.setUsername(userNameMap.get(article.getAuthor()));
+                            article.setAuthorAvatar(userAvatarMap.getOrDefault(article.getAuthor(), ""));
+                            articles.add(article);
+                        }
+                    }
+
+                    liveData.postValue(articles);
+                });
+
+        return liveData;
     }
 
     public interface OnLikeResultListener {
@@ -358,8 +369,9 @@ public class ArticlesRepository {
             if (value != null) {
                 for (DocumentSnapshot doc : value.getDocuments()) {
                     String userId = doc.getId();
-                    String username = doc.getString("name");
-                    userNameMap.put(userId, username);
+                    userNameMap.put(userId, doc.getString("name"));
+                    userAvatarMap.put(userId, doc.getString("avatarUrl"));
+                    Log.d("ArticlesRepository", "Loaded user: " + doc.getString("avatarUrl"));
                 }
             }
         });
@@ -402,19 +414,16 @@ public class ArticlesRepository {
                     public void onProgress(String requestId, long bytes, long totalBytes) {
                         // Có thể thêm logic nếu cần
                     }
-
                     @Override
                     public void onSuccess(String requestId, Map resultData) {
                         String imageUrl = (String) resultData.get("secure_url");
                         String publicId = (String) resultData.get("public_id");
                         callback.onSuccess(imageUrl, publicId);
                     }
-
                     @Override
                     public void onError(String requestId, com.cloudinary.android.callback.ErrorInfo error) {
                         callback.onError(error.getDescription());
                     }
-
                     @Override
                     public void onReschedule(String requestId, com.cloudinary.android.callback.ErrorInfo error) {
                         // Có thể thêm logic nếu cần
@@ -463,9 +472,6 @@ public class ArticlesRepository {
                         likedArticlesLiveData.setValue(new ArrayList<>());
                         return;
                     }
-
-                    Log.d("ArticlesRepository", "=== LIKED ARTICLES QUERY SUCCESS ===");
-                    Log.d("ArticlesRepository", "User: " + userId);
                     List<Articles> articles = new ArrayList<>();
                     if (value != null) {
                         Log.d("ArticlesRepository", "Got " + value.size() + " documents from liked query");
@@ -476,6 +482,8 @@ public class ArticlesRepository {
                                 article.setArticleId(doc.getId());
                                 article.setCategoryName(categoryMap.get(article.getCategoryId()));
                                 article.setUsername(userNameMap.get(article.getAuthor()));
+                                String avatarUrl = userAvatarMap.get(article.getAuthor());
+                                article.setAuthorAvatar(avatarUrl != null ? avatarUrl : "default_avatar_url");
                                 articles.add(article);
                                 Log.d("ArticlesRepository", "Added liked article: " + article.getTitle());
                             } else {
@@ -612,8 +620,9 @@ public class ArticlesRepository {
                                 article.setArticleId(doc.getId());
                                 article.setCategoryName(categoryMap.get(article.getCategoryId()));
                                 article.setUsername(userNameMap.get(article.getAuthor()));
+                                String avatarUrl = userAvatarMap.get(article.getAuthor());
+                                article.setAuthorAvatar(avatarUrl != null ? avatarUrl : "default_avatar_url");
                                 articles.add(article);
-                                Log.d("ArticlesRepository", "Added bookmarked article: " + article.getTitle());
                             }
                         }
                     }
@@ -770,13 +779,13 @@ public class ArticlesRepository {
                         commentCountLiveData.setValue(0);
                         return;
                     }
-                    
+
                     int totalCommentCount = 0;
                     if (value != null) {
                         // Đếm số bình luận cha
                         int parentCommentCount = value.size();
                         totalCommentCount = parentCommentCount;
-                        
+
                         // Đếm số replies trong mỗi bình luận cha
                         int replyCount = 0;
                         for (DocumentSnapshot doc : value.getDocuments()) {
@@ -791,8 +800,8 @@ public class ArticlesRepository {
                         }
                         
                         totalCommentCount += replyCount;
-                        Log.d("ArticlesRepository", "Comment count for article " + articleId + 
-                              ": " + parentCommentCount + " parent comments + " + replyCount + 
+                        Log.d("ArticlesRepository", "Comment count for article " + articleId +
+                              ": " + parentCommentCount + " parent comments + " + replyCount +
                               " replies = " + totalCommentCount + " total");
                     }
                     commentCountLiveData.setValue(totalCommentCount);
@@ -832,7 +841,7 @@ public class ArticlesRepository {
                                 article.setArticleId(doc.getId());
                                 article.setCategoryName(categoryMap.get(article.getCategoryId()));
                                 article.setUsername(userNameMap.get(article.getAuthor()));
-                                
+
                                 // Check if title or content contains search query
                                 String title = article.getTitle() != null ? article.getTitle().toLowerCase() : "";
                                 String content = article.getContent() != null ? article.getContent().toLowerCase() : "";
@@ -876,10 +885,10 @@ public class ArticlesRepository {
                             }
                         }
                     }
-                    
+
                     // Sort by likes count in descending order (client-side)
                     allArticles.sort((a1, a2) -> Integer.compare(a2.getLikesCount(), a1.getLikesCount()));
-                    
+
                     // Take only the specified limit
                     List<Articles> trendingArticles = new ArrayList<>();
                     for (int i = 0; i < Math.min(limit, allArticles.size()); i++) {
