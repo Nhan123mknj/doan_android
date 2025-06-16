@@ -101,11 +101,11 @@ public class ProfileFragment extends Fragment {
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
-            // Người dùng chưa đăng nhập → chuyển sang LoginActivity
+
             Intent intent = new Intent(getActivity(), LoginActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
-            requireActivity().finish(); // Đóng MainActivity để không quay lại
+            requireActivity().finish();
             return view;
         }
         initView(view);
@@ -162,11 +162,13 @@ public class ProfileFragment extends Fragment {
         followerCount.setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), FollowActivity.class);
             intent.putExtra("userId", user.getUid());
+            intent.putExtra("type", "follower");
             startActivity(intent);
         });
         followingCount.setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), FollowActivity.class);
             intent.putExtra("userId", user.getUid());
+            intent.putExtra("type", "following");
             startActivity(intent);
         });
 
@@ -191,8 +193,9 @@ public class ProfileFragment extends Fragment {
     private void showArticlesByUser(ArticlesAdapter adapter) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if(user == null){
-           Log.d("ProfileFragment", "User is null");
+            Log.d("ProfileFragment", "User is null");
         }
+        assert user != null;
         String uid = user.getUid();
         articlesViewModel.getArticlesByAuthor(uid).observe(getViewLifecycleOwner(), articles -> {
             if (articles != null && !articles.isEmpty()) {
@@ -202,7 +205,6 @@ public class ProfileFragment extends Fragment {
                 Log.d("ProfileFragment", "No articles found for user: " + uid);
             }
         });
-
     }
 
 

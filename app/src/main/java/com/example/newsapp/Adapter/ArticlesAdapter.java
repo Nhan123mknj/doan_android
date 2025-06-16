@@ -18,6 +18,8 @@ import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
+import de.hdodenhof.circleimageview.CircleImageView;
+
 public class ArticlesAdapter extends RecyclerView.Adapter<ArticlesAdapter.ViewHolder> {
     private List<Articles> articlesList;
     private IClickItemArticlesListener listener;
@@ -72,6 +74,13 @@ public class ArticlesAdapter extends RecyclerView.Adapter<ArticlesAdapter.ViewHo
         if (holder.authorTextView != null) {
             holder.authorTextView.setText(articles.getUsername());
         }
+        if (holder.authorAvatar != null) {
+            if (articles.getAuthorAvatar() != null && !articles.getAuthorAvatar().isEmpty()) {
+                Picasso.get().load(articles.getAuthorAvatar()).placeholder(R.drawable.avatar).into(holder.authorAvatar);
+            } else {
+                holder.authorAvatar.setImageResource(R.drawable.avatar);
+            }
+        }
         if (holder.more_icon != null && layoutType.equals(TYPE_LASTEST)) {
             holder.more_icon.setOnClickListener(v -> {
                 PopupMenu popupMenu = new PopupMenu(holder.itemView.getContext(),holder.more_icon);
@@ -101,6 +110,7 @@ public class ArticlesAdapter extends RecyclerView.Adapter<ArticlesAdapter.ViewHo
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private ImageView thumbnail,more_icon;
         private TextView title, publishedAt, categoryTextView, authorTextView;
+        private CircleImageView authorAvatar;
 
         public ViewHolder(@NonNull View itemView, String layoutType) {
             super(itemView);
@@ -112,12 +122,15 @@ public class ArticlesAdapter extends RecyclerView.Adapter<ArticlesAdapter.ViewHo
                 categoryTextView = itemView.findViewById(R.id.categoryTextView);
                 authorTextView = itemView.findViewById(R.id.authorTextView);
                 more_icon = itemView.findViewById(R.id.more_icon);
+                authorAvatar = itemView.findViewById(R.id.authorImage);
+
             } else if (layoutType.equals(TYPE_TRENDING)) {
                 title = itemView.findViewById(R.id.title_trending);
                 publishedAt = itemView.findViewById(R.id.pubDate);
                 thumbnail = itemView.findViewById(R.id.news_trending_img);
                 categoryTextView = itemView.findViewById(R.id.categoryTextView);
                 authorTextView = itemView.findViewById(R.id.authorTextView);
+                authorAvatar = itemView.findViewById(R.id.authorImage);
             }
         }
     }

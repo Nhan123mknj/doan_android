@@ -41,6 +41,8 @@ import com.squareup.picasso.Picasso;
 
 import java.util.Locale;
 
+import de.hdodenhof.circleimageview.CircleImageView;
+
 public class DetailActivity extends AppCompatActivity {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private Articles article;
@@ -50,6 +52,7 @@ public class DetailActivity extends AppCompatActivity {
     ImageView thumbnail,miniPlayerThumbnail;
     ImageButton btnBack, btnLike, btnSave, btnComment, btnMore, btnRead,miniPlayerPlayPause,miniPlayerStop;
     TextView categoryTextView, authorName;
+    CircleImageView authorAvatar;
     private boolean isReading = false;
     private boolean isPaused = false;
     private Button followButton;
@@ -71,32 +74,7 @@ public class DetailActivity extends AppCompatActivity {
         }
     };
 
-    private void handleLayoutReading(int actionReading) {
-        switch (actionReading) {
-            case TSSServices.ACTION_START:
-                miniPlayer.setVisibility(View.VISIBLE);
-                miniPlayerPlayPause.setImageResource(R.drawable.pause_icon);
-                miniPlayerTitle.setSelected(true);
-                miniPlayerTitle.setText(title.getText().toString());
 
-                Picasso.get().load(article.getUrlToImage()).into(miniPlayerThumbnail);
-                setStatusPlayPause();
-                break;
-            case TSSServices.ACTION_PAUSE:
-                isPaused = true;
-                setStatusPlayPause();
-                break;
-            case TSSServices.ACTION_RESUME:
-                isPaused = false;
-                setStatusPlayPause();
-                break;
-            case TSSServices.ACTION_CLEAR:
-                isPaused = false;
-                isReading = false;
-                miniPlayer.setVisibility(View.GONE);
-                break;
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,7 +107,7 @@ public class DetailActivity extends AppCompatActivity {
                 Picasso.get().load(articles.getUrlToImage()).into(thumbnail);
                 categoryTextView.setText(articles.getCategoryName());
                 authorName.setText(articles.getUsername());
-                Log.d("cateid", article.getArticleId());
+                Picasso.get().load(articles.getAuthorAvatar()).placeholder(R.drawable.avatar).into(authorAvatar);
             });
             
 
@@ -143,8 +121,137 @@ public class DetailActivity extends AppCompatActivity {
             });
         }
 
+        checkLikeAndSaveStatus();
+
+        btnComment.setOnClickListener(v -> {
+            Intent intent1 = new Intent(DetailActivity.this, CommentActivity.class);
+            intent1.putExtra("articleId", article.getArticleId());
+            startActivity(intent1);
+        });
+
+        btnLike.setOnClickListener(v -> {
+            likeAction();
+        });
+
+        btnSave.setOnClickListener(v -> {
+            saveAction();
+        });
+
+        followButton.setOnClickListener(v -> {
+            followAction();
+        });
 
 
+        btnMore.setOnClickListener(v -> {
+            showPopupMenu(v);
+        });
+        btnRead.setOnClickListener(v -> {
+            if (!isReading) {
+                Intent serviceIntent = new Intent(DetailActivity.this, TSSServices.class);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("article", article);
+                bundle.putInt("actionService", TSSServices.ACTION_START);
+                serviceIntent.putExtras(bundle);
+                startService(serviceIntent);
+
+            }
+        });
+
+        miniPlayerPlayPause.setOnClickListener(v -> {
+            if (isReading ) {
+               sendActionToService(TSSServices.ACTION_PAUSE);
+            } else{
+               sendActionToService(TSSServices.ACTION_RESUME);
+            }
+        });
+
+        miniPlayerStop.setOnClickListener(v -> {
+            sendActionToService(TSSServices.ACTION_CLEAR);
+
+        });
+    }
+
+    private void followAction() {
+        if (user == null) {
+            mainHandler.post(() -> DialogLogin.openDialogLogin(
+                    this,
+                    Gravity.CENTER,
+                    () -> {
+                        Intent loginIntent = new Intent(this, LoginActivity.class);
+                        ((Activity) this).startActivityForResult(loginIntent, 100);
+                    }
+            ));
+            return;
+        }
+        String userId = user.getUid();
+        userviewModel.toggleFollowUser( userId,article.getAuthor(), new UserRespository.OnFollowStatusChangedListener() {
+            @Override
+            public void onChanged(boolean isFollowing) {
+                if (isFollowing) {
+                    followButton.setText("Đã theo dõi");
+                    Toast.makeText(DetailActivity.this, "Đã theo dõi người dùng", Toast.LENGTH_SHORT).show();
+                } else {
+                    followButton.setText("Theo dõi tôi");
+                    Toast.makeText(DetailActivity.this, "Đã bỏ theo dõi người dùng", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void saveAction() {
+        btnSave.setEnabled(false);
+        viewModel.bookmarkArticle(article.getArticleId(), DetailActivity.this,
+                new ArticlesRepository.OnBookmarkResultListener() {
+                    @Override
+                    public void onSuccess(boolean isBookmarked) {
+                        btnSave.setEnabled(true);
+                        Toast.makeText(DetailActivity.this, isBookmarked ? "Đã lưu bài viết" : "Đã bỏ lưu",
+                                Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        btnSave.setEnabled(true);
+                        if (errorMessage.equals("Login required")) {
+                            Intent loginIntent = new Intent(DetailActivity.this, LoginActivity.class);
+                            startActivity(loginIntent);
+                        } else {
+                            Toast.makeText(DetailActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
+
+    private void likeAction() {
+        btnLike.setEnabled(false);
+        viewModel.likeArticle(article.getArticleId(), DetailActivity.this,
+                new ArticlesRepository.OnLikeResultListener() {
+                    @Override
+                    public void onSuccess(boolean isLiked) {
+                        btnLike.setEnabled(true);
+                        Toast.makeText(DetailActivity.this, isLiked ? "Đã thích bài viết" : "Đã bỏ thích",
+                                Toast.LENGTH_SHORT).show();
+                        viewModel.getArticleById(article.getArticleId()).observe(DetailActivity.this, articles -> {
+                            if (articles != null) {
+                                likeCount.setText(String.valueOf(articles.getLikesCount()));
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        btnLike.setEnabled(true);
+                        if (errorMessage.equals("Yêu cầu đăng nhập")) {
+                            Intent loginIntent = new Intent(DetailActivity.this, LoginActivity.class);
+                            startActivity(loginIntent);
+                        } else {
+                            Toast.makeText(DetailActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
+
+    private void checkLikeAndSaveStatus() {
         if (user != null) {
             String userId = user.getUid();
             viewModel.getLikeStatus(article.getArticleId(), userId).observe(this, isLiked -> {
@@ -167,126 +274,34 @@ public class DetailActivity extends AppCompatActivity {
             btnLike.setImageResource(R.drawable.ic_heart_outline);
             btnSave.setImageResource(R.drawable.ic_save_outline);
         }
-
-        btnComment.setOnClickListener(v -> {
-            Intent intent1 = new Intent(DetailActivity.this, CommentActivity.class);
-            intent1.putExtra("articleId", article.getArticleId());
-            startActivity(intent1);
-        });
-
-        btnLike.setOnClickListener(v -> {
-            btnLike.setEnabled(false);
-            viewModel.likeArticle(article.getArticleId(), DetailActivity.this,
-                    new ArticlesRepository.OnLikeResultListener() {
-                        @Override
-                        public void onSuccess(boolean isLiked) {
-                            btnLike.setEnabled(true);
-                            Toast.makeText(DetailActivity.this, isLiked ? "Đã thích bài viết" : "Đã bỏ thích",
-                                    Toast.LENGTH_SHORT).show();
-                            viewModel.getArticleById(article.getArticleId()).observe(DetailActivity.this, articles -> {
-                                if (articles != null) {
-                                    likeCount.setText(String.valueOf(articles.getLikesCount()));
-                                }
-                            });
-                        }
-
-                        @Override
-                        public void onError(String errorMessage) {
-                            btnLike.setEnabled(true);
-                            if (errorMessage.equals("Yêu cầu đăng nhập")) {
-                                Intent loginIntent = new Intent(DetailActivity.this, LoginActivity.class);
-                                startActivity(loginIntent);
-                            } else {
-                                Toast.makeText(DetailActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    });
-        });
-
-        btnSave.setOnClickListener(v -> {
-            btnSave.setEnabled(false);
-            viewModel.bookmarkArticle(article.getArticleId(), DetailActivity.this,
-                    new ArticlesRepository.OnBookmarkResultListener() {
-                        @Override
-                        public void onSuccess(boolean isBookmarked) {
-                            btnSave.setEnabled(true);
-                            Toast.makeText(DetailActivity.this, isBookmarked ? "Đã lưu bài viết" : "Đã bỏ lưu",
-                                    Toast.LENGTH_SHORT).show();
-                        }
-
-                        @Override
-                        public void onError(String errorMessage) {
-                            btnSave.setEnabled(true);
-                            if (errorMessage.equals("Login required")) {
-                                Intent loginIntent = new Intent(DetailActivity.this, LoginActivity.class);
-                                startActivity(loginIntent);
-                            } else {
-                                Toast.makeText(DetailActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    });
-        });
-
-        followButton.setOnClickListener(v -> {
-            if (user == null) {
-                mainHandler.post(() -> DialogLogin.openDialogLogin(
-                        this,
-                        Gravity.CENTER,
-                        () -> {
-                            Intent loginIntent = new Intent(this, LoginActivity.class);
-                            ((Activity) this).startActivityForResult(loginIntent, 100);
-                        }
-                ));
-                return;
-            }
-            String userId = user.getUid();
-            userviewModel.toggleFollowUser(article.getAuthor(), userId, new UserRespository.OnFollowStatusChangedListener() {
-                @Override
-                public void onChanged(boolean isFollowing) {
-                    if (isFollowing) {
-                        followButton.setText("Đã theo dõi");
-                        Toast.makeText(DetailActivity.this, "Đã theo dõi người dùng", Toast.LENGTH_SHORT).show();
-                    } else {
-                        followButton.setText("Theo dõi");
-                        Toast.makeText(DetailActivity.this, "Đã bỏ theo dõi người dùng", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            });
-        });
-
-
-        btnMore.setOnClickListener(v -> {
-            showPopupMenu(v);
-        });
-        btnRead.setOnClickListener(v -> {
-
-            if (!isReading) {
-                Intent serviceIntent = new Intent(DetailActivity.this, TSSServices.class);
-                Bundle bundle = new Bundle();
-                bundle.putSerializable("article", article);
-                bundle.putInt("actionService", TSSServices.ACTION_START);
-
-                serviceIntent.putExtras(bundle);
-                startService(serviceIntent);
-
-            }
-        });
-
-        miniPlayerPlayPause.setOnClickListener(v -> {
-
-            if (isReading ) {
-               sendActionToService(TSSServices.ACTION_PAUSE);
-            } else{
-               sendActionToService(TSSServices.ACTION_RESUME);
-            }
-        });
-
-        miniPlayerStop.setOnClickListener(v -> {
-            sendActionToService(TSSServices.ACTION_CLEAR);
-
-        });
     }
 
+    private void handleLayoutReading(int actionReading) {
+        switch (actionReading) {
+            case TSSServices.ACTION_START:
+                miniPlayer.setVisibility(View.VISIBLE);
+                miniPlayerPlayPause.setImageResource(R.drawable.pause_icon);
+                miniPlayerTitle.setSelected(true);
+                miniPlayerTitle.setText(title.getText().toString());
+
+                Picasso.get().load(article.getUrlToImage()).into(miniPlayerThumbnail);
+                setStatusPlayPause();
+                break;
+            case TSSServices.ACTION_PAUSE:
+                isPaused = true;
+                setStatusPlayPause();
+                break;
+            case TSSServices.ACTION_RESUME:
+                isPaused = false;
+                setStatusPlayPause();
+                break;
+            case TSSServices.ACTION_CLEAR:
+                isPaused = false;
+                isReading = false;
+                miniPlayer.setVisibility(View.GONE);
+                break;
+        }
+    }
     private void initView() {
         title = findViewById(R.id.title);
         likeCount = findViewById(R.id.likeCount);
@@ -308,6 +323,7 @@ public class DetailActivity extends AppCompatActivity {
         miniPlayerStop = findViewById(R.id.miniPlayerStop);
         miniPlayerThumbnail = findViewById(R.id.miniPlayerThumbnail);
         followButton = findViewById(R.id.followButton);
+        authorAvatar = findViewById(R.id.authorImage);
     }
 
     private void showPopupMenu(android.view.View view) {
